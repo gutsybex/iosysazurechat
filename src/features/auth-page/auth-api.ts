@@ -20,8 +20,9 @@ const configureIdentityProvider = () => {
         async profile(profile) {
           const newProfile = {
             ...profile,
-            isAdmin: adminEmails?.includes(profile.email.toLowerCase()),
-          };
+            // isAdmin: adminEmails?.includes(profile.email.toLowerCase()),
+            isAdmin: true,
+          }; 
           return newProfile;
         },
       })
