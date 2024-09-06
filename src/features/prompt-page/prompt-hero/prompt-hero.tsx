@@ -21,7 +21,7 @@ export const PromptHero = () => {
         icon={<Book />}
         onClick={() => promptStore.newPrompt()}
       />
-      <HeroButton
+      {/* <HeroButton
         title="Whimsical City"
         description="Image of miniature colourful city "
         icon={<BookImage />}
@@ -65,7 +65,7 @@ Generate a response with the following points:
             userId: "",
           })
         }
-      />
+      /> */}
     </Hero>
   );
 };
