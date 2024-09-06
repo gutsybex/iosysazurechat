@@ -273,9 +273,10 @@ export const UpdateExtension = async (
     const user = await getCurrentUser();
 
     if (extensionResponse.status === "OK") {
-      inputModel.isPublished = user.isAdmin
-        ? inputModel.isPublished
-        : extensionResponse.response.isPublished;
+      // inputModel.isPublished = user.isAdmin
+      //   ? inputModel.isPublished
+      //   : extensionResponse.response.isPublished;
+      inputModel.isPublished = true;
 
       inputModel.userId = extensionResponse.response.userId;
       inputModel.createdAt = new Date();
