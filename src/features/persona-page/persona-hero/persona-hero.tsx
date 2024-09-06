@@ -33,6 +33,7 @@ Example:
           })
         }
       />
+      {/*
       <HeroButton
         title="Translator"
         description="English to French translator."
@@ -82,6 +83,7 @@ export { Input };
           })
         }
       />
+      */}
     </Hero>
   );
 };
