@@ -41,13 +41,10 @@ class ExtensionState {
       type: "EXTENSION",
       functions: [],
       headers: [
-        {
-          id: uniqueId(),
-          key: "Content-Type",
-          value: "application/json",
-        },
+        { id: uniqueId(), key: "Content-Type", value: "application/json" },
       ],
       userId: "",
+      shareWith: [], // Include shareWith
     };
   }
 
@@ -69,10 +66,15 @@ class ExtensionState {
       errors: [],
     };
 
+    // console.log("EXT model: ", modelToSubmit);
+
+    // console.log("ID; ", modelToSubmit.id);
     const response =
       modelToSubmit.id === ""
         ? await CreateExtension(modelToSubmit)
         : await UpdateExtension(modelToSubmit);
+
+    // console.log("RESP: ", response);
 
     if (response.status !== "OK") {
       this.formState = {
@@ -185,7 +187,10 @@ export const AddOrUpdateExtension = async (
   previous: any,
   formData: FormData
 ) => {
+  const shareWithData = formData.get("shareWith") as string;
+
   const modelToSubmit = FormToExtensionModel(formData);
+
   await extensionStore.submitForm(modelToSubmit);
 };
 
@@ -194,40 +199,54 @@ export const FormToExtensionModel = (formData: FormData): ExtensionModel => {
   const headerValues = formData.getAll("header-value[]");
   const headerIds = formData.getAll("header-id[]");
 
-  const headers: Array<HeaderModel> = headerKeys.map((k, index) => {
-    return {
-      id: headerIds[index] as string,
-      key: k as string,
-      value: headerValues[index] as string,
-    };
-  });
+  const headers: Array<HeaderModel> = headerKeys.map((k, index) => ({
+    id: headerIds[index] as string,
+    key: k as string,
+    value: headerValues[index] as string,
+  }));
 
   const endpointTypes = formData.getAll("endpoint-type[]");
   const endpoints = formData.getAll("endpoint[]");
   const codes = formData.getAll("code[]");
+
   const functions: Array<ExtensionFunctionModel> = endpointTypes.map(
-    (endpointType, index) => {
-      return {
-        id: uniqueId(),
-        endpointType: endpointType as EndpointType,
-        endpoint: endpoints[index] as string,
-        code: codes[index] as string,
-        isOpen: false,
-      };
-    }
+    (endpointType, index) => ({
+      id: uniqueId(),
+      endpointType: endpointType as EndpointType,
+      endpoint: endpoints[index] as string,
+      code: codes[index] as string,
+      isOpen: false,
+    })
   );
+
+  // Extract and parse the shareWith field from formData
+  const shareWithData = formData.get("shareWith") as string;
+  let shareWith: Array<{
+    id: string;
+    displayName: string;
+    userPrincipalName: string;
+  }> = [];
+
+  if (shareWithData) {
+    try {
+      shareWith = JSON.parse(shareWithData);
+    } catch (error) {
+      console.error("Error parsing shareWith data: ", error);
+    }
+  }
 
   return {
     id: formData.get("id") as string,
     name: formData.get("name") as string,
     description: formData.get("description") as string,
     executionSteps: formData.get("executionSteps") as string,
-    isPublished: formData.get("isPublished") === "on" ? true : false,
-    userId: "", // the user id is set on the server once the user is authenticated
+    isPublished: formData.get("isPublished") === "on",
+    userId: "", // The user ID is set on the server once authenticated
     createdAt: new Date(),
     type: "EXTENSION",
     functions: functions,
     headers: headers,
+    shareWith: shareWith, // Include shareWith in the model
   };
 };
 

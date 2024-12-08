@@ -6,6 +6,13 @@ import {
   UpsertPersona,
 } from "./persona-services/persona-service";
 
+// Define the User type
+interface User {
+  id: string;
+  displayName: string;
+  userPrincipalName: string;
+}
+
 class PersonaState {
   private defaultModel: PersonaModel = {
     id: "",
@@ -16,6 +23,7 @@ class PersonaState {
     isPublished: false,
     type: "PERSONA",
     userId: "",
+    shareWith: [], // Default shareWith as an empty array
   };
 
   public isOpened: boolean = false;
@@ -27,16 +35,12 @@ class PersonaState {
   }
 
   public updatePersona(persona: PersonaModel) {
-    this.persona = {
-      ...persona,
-    };
+    this.persona = { ...persona };
     this.isOpened = true;
   }
 
   public newPersona() {
-    this.persona = {
-      ...this.defaultModel,
-    };
+    this.persona = { ...this.defaultModel };
     this.isOpened = true;
   }
 
@@ -69,16 +73,14 @@ export const addOrUpdatePersona = async (previous: any, formData: FormData) => {
   personaStore.updateErrors([]);
 
   const model = FormDataToPersonaModel(formData);
-  const response =
-    model.id && model.id !== ""
-      ? await UpsertPersona(model)
-      : await CreatePersona(model);
+
+  model.id && model.id !== ""
+    ? await UpsertPersona(model)
+    : await CreatePersona(model);
 
   if (response.status === "OK") {
     personaStore.updateOpened(false);
-    RevalidateCache({
-      page: "persona",
-    });
+    RevalidateCache({ page: "persona" });
   } else {
     personaStore.updateErrors(response.errors.map((e) => e.message));
   }
@@ -86,14 +88,28 @@ export const addOrUpdatePersona = async (previous: any, formData: FormData) => {
 };
 
 export const FormDataToPersonaModel = (formData: FormData): PersonaModel => {
+  // Extract shareWith data from formData and parse it
+  const shareWithData = formData.get("shareWith") as string;
+  let shareWith: User[] = [];
+
+  if (shareWithData) {
+    try {
+      shareWith = JSON.parse(shareWithData);
+      console.log("Parsed shareWith:", shareWith);
+    } catch (e) {
+      console.error("Error parsing shareWith:", e);
+    }
+  }
+
   return {
     id: formData.get("id") as string,
     name: formData.get("name") as string,
     description: formData.get("description") as string,
     personaMessage: formData.get("personaMessage") as string,
     isPublished: formData.get("isPublished") === "on" ? true : false,
-    userId: "", // the user id is set on the server once the user is authenticated
+    userId: "", // Will be set on the server
     createdAt: new Date(),
     type: PERSONA_ATTRIBUTE,
+    shareWith, // Include shareWith field
   };
 };

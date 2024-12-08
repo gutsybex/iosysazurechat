@@ -119,6 +119,7 @@ export const CreateExtension = async (
           response: resource,
         };
       } else {
+        console.log("Error: ", resource);
         return {
           status: "ERROR",
           errors: [

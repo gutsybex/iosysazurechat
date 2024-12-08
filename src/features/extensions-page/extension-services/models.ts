@@ -7,6 +7,12 @@ export type ExtensionModel = z.infer<typeof ExtensionModelSchema>;
 export type ExtensionFunctionModel = z.infer<typeof ExtensionFunctionSchema>;
 export type HeaderModel = z.infer<typeof HeaderSchema>;
 
+export const UserSchema = z.object({
+  id: z.string(),
+  displayName: z.string().min(1), // Assuming displayName should be a non-empty string
+  userPrincipalName: z.string().email(), // Assuming userPrincipalName should be an email address
+});
+
 export const HeaderSchema = z.object({
   id: z.string(),
   key: z
@@ -53,28 +59,31 @@ export const ExtensionFunctionSchema = z.object({
 
 export const ExtensionModelSchema = z.object({
   id: z.string(),
+  userId: z.string(),
   name: z
-    .string()
-    .min(1, {
-      message: "Title cannot be empty",
-    })
+    .string({ invalid_type_error: "Invalid title" })
+    .min(1)
     .refine(refineFromEmpty, "Title cannot be empty"),
   description: z
-    .string()
-    .min(1, {
-      message: "Description cannot be empty",
-    })
+    .string({ invalid_type_error: "Invalid description" })
+    .min(1)
     .refine(refineFromEmpty, "Description cannot be empty"),
   executionSteps: z
-    .string()
-    .min(1, {
-      message: "persona cannot be empty",
-    })
-    .refine(refineFromEmpty, "Description cannot be empty"),
-  headers: z.array(HeaderSchema),
-  userId: z.string(),
+    .string({ invalid_type_error: "Invalid execution steps" })
+    .min(1)
+    .refine(refineFromEmpty, "Execution steps cannot be empty"),
   isPublished: z.boolean(),
-  createdAt: z.date(),
-  functions: z.array(ExtensionFunctionSchema), // validation is done in the function schema
   type: z.literal(EXTENSION_ATTRIBUTE),
+  createdAt: z.date(),
+  functions: z.array(z.any()),
+  headers: z.array(z.any()),
+  shareWith: z
+    .array(
+      z.object({
+        id: z.string(),
+        displayName: z.string(),
+        userPrincipalName: z.string(),
+      })
+    )
+    .optional(),
 });

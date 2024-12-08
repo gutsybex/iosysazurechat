@@ -21,6 +21,13 @@ interface PersonaInput {
   description: string;
   personaMessage: string;
   isPublished: boolean;
+  shareWith: Array<{
+    id: string;
+    givenName: string;
+    displayName: string;
+    userPrincipalName: string;
+    mail: string;
+  }>;
 }
 
 export const FindPersonaByID = async (
@@ -78,6 +85,7 @@ export const CreatePersona = async (
   try {
     const user = await getCurrentUser();
 
+    // Ensure shareWith is correctly assigned
     const modelToSave: PersonaModel = {
       id: uniqueId(),
       name: props.name,
@@ -87,14 +95,17 @@ export const CreatePersona = async (
       userId: await userHashedId(),
       createdAt: new Date(),
       type: "PERSONA",
+      shareWith: props.shareWith || [], // Use props.shareWith or default to an empty array
     };
 
+    // Validate the model before saving
     const valid = ValidateSchema(modelToSave);
 
     if (valid.status !== "OK") {
       return valid;
     }
 
+    // Save to Cosmos DB
     const { resource } = await HistoryContainer().items.create<PersonaModel>(
       modelToSave
     );
@@ -105,14 +116,7 @@ export const CreatePersona = async (
         response: resource,
       };
     } else {
-      return {
-        status: "ERROR",
-        errors: [
-          {
-            message: "Error creating persona",
-          },
-        ],
-      };
+      throw new Error("Error creating persona");
     }
   } catch (error) {
     return {
@@ -125,6 +129,121 @@ export const CreatePersona = async (
     };
   }
 };
+
+export const UpsertPersona = async (
+  personaInput: PersonaModel
+): Promise<ServerActionResponse<PersonaModel>> => {
+  try {
+    const personaResponse = await EnsurePersonaOperation(personaInput.id);
+
+    if (personaResponse.status === "OK") {
+      const { response: persona } = personaResponse;
+      const user = await getCurrentUser();
+
+      const modelToUpdate: PersonaModel = {
+        ...persona,
+        name: personaInput.name,
+        description: personaInput.description,
+        personaMessage: personaInput.personaMessage,
+        isPublished: user.isAdmin
+          ? personaInput.isPublished
+          : persona.isPublished,
+        createdAt: new Date(),
+        shareWith: personaInput.shareWith,
+      };
+
+      const validationResponse = ValidateSchema(modelToUpdate);
+      if (validationResponse.status !== "OK") {
+        return validationResponse;
+      }
+
+      const { resource } = await HistoryContainer().items.upsert<PersonaModel>(
+        modelToUpdate
+      );
+
+      if (resource) {
+        return {
+          status: "OK",
+          response: resource,
+        };
+      }
+
+      return {
+        status: "ERROR",
+        errors: [
+          {
+            message: "Error updating persona",
+          },
+        ],
+      };
+    }
+
+    return personaResponse;
+  } catch (error) {
+    return {
+      status: "ERROR",
+      errors: [
+        {
+          message: `Error updating persona: ${error}`,
+        },
+      ],
+    };
+  }
+};
+
+// export const CreatePersona = async (
+//   props: PersonaInput
+// ): Promise<ServerActionResponse<PersonaModel>> => {
+//   try {
+//     const user = await getCurrentUser();
+
+//     const modelToSave: PersonaModel = {
+//       id: uniqueId(),
+//       name: props.name,
+//       description: props.description,
+//       personaMessage: props.personaMessage,
+//       isPublished: user.isAdmin ? props.isPublished : false,
+//       userId: await userHashedId(),
+//       createdAt: new Date(),
+//       type: "PERSONA",
+//     };
+
+//     const valid = ValidateSchema(modelToSave);
+
+//     if (valid.status !== "OK") {
+//       return valid;
+//     }
+
+//     const { resource } = await HistoryContainer().items.create<PersonaModel>(
+//       modelToSave
+//     );
+
+//     if (resource) {
+//       return {
+//         status: "OK",
+//         response: resource,
+//       };
+//     } else {
+//       return {
+//         status: "ERROR",
+//         errors: [
+//           {
+//             message: "Error creating persona",
+//           },
+//         ],
+//       };
+//     }
+//   } catch (error) {
+//     return {
+//       status: "ERROR",
+//       errors: [
+//         {
+//           message: `Error creating persona: ${error}`,
+//         },
+//       ],
+//     };
+//   }
+// };
 
 export const EnsurePersonaOperation = async (
   personaId: string
@@ -179,73 +298,87 @@ export const DeletePersona = async (
   }
 };
 
-export const UpsertPersona = async (
-  personaInput: PersonaModel
-): Promise<ServerActionResponse<PersonaModel>> => {
-  try {
-    const personaResponse = await EnsurePersonaOperation(personaInput.id);
+// export const UpsertPersona = async (
+//   personaInput: PersonaModel
+// ): Promise<ServerActionResponse<PersonaModel>> => {
+//   try {
+//     const personaResponse = await EnsurePersonaOperation(personaInput.id);
 
-    if (personaResponse.status === "OK") {
-      const { response: persona } = personaResponse;
-      const user = await getCurrentUser();
+//     if (personaResponse.status === "OK") {
+//       const { response: persona } = personaResponse;
+//       const user = await getCurrentUser();
 
-      const modelToUpdate: PersonaModel = {
-        ...persona,
-        name: personaInput.name,
-        description: personaInput.description,
-        personaMessage: personaInput.personaMessage,
-        isPublished: user.isAdmin
-          ? personaInput.isPublished
-          : persona.isPublished,
-        createdAt: new Date(),
-      };
+//       const modelToUpdate: PersonaModel = {
+//         ...persona,
+//         name: personaInput.name,
+//         description: personaInput.description,
+//         personaMessage: personaInput.personaMessage,
+//         isPublished: user.isAdmin
+//           ? personaInput.isPublished
+//           : persona.isPublished,
+//         createdAt: new Date(),
+//       };
 
-      const validationResponse = ValidateSchema(modelToUpdate);
-      if (validationResponse.status !== "OK") {
-        return validationResponse;
-      }
+//       const validationResponse = ValidateSchema(modelToUpdate);
+//       if (validationResponse.status !== "OK") {
+//         return validationResponse;
+//       }
 
-      const { resource } = await HistoryContainer().items.upsert<PersonaModel>(
-        modelToUpdate
-      );
+//       const { resource } = await HistoryContainer().items.upsert<PersonaModel>(
+//         modelToUpdate
+//       );
 
-      if (resource) {
-        return {
-          status: "OK",
-          response: resource,
-        };
-      }
+//       if (resource) {
+//         return {
+//           status: "OK",
+//           response: resource,
+//         };
+//       }
 
-      return {
-        status: "ERROR",
-        errors: [
-          {
-            message: "Error updating persona",
-          },
-        ],
-      };
-    }
+//       return {
+//         status: "ERROR",
+//         errors: [
+//           {
+//             message: "Error updating persona",
+//           },
+//         ],
+//       };
+//     }
 
-    return personaResponse;
-  } catch (error) {
-    return {
-      status: "ERROR",
-      errors: [
-        {
-          message: `Error updating persona: ${error}`,
-        },
-      ],
-    };
-  }
-};
+//     return personaResponse;
+//   } catch (error) {
+//     return {
+//       status: "ERROR",
+//       errors: [
+//         {
+//           message: `Error updating persona: ${error}`,
+//         },
+//       ],
+//     };
+//   }
+// };
 
 export const FindAllPersonaForCurrentUser = async (): Promise<
   ServerActionResponse<Array<PersonaModel>>
 > => {
   try {
+    const currentUserId = await userHashedId();
+
     const querySpec: SqlQuerySpec = {
-      query:
-        "SELECT * FROM root r WHERE r.type=@type AND (r.isPublished=@isPublished OR r.userId=@userId) ORDER BY r.createdAt DESC",
+      query: `
+        SELECT * FROM root r 
+        WHERE r.type=@type 
+        AND (
+          r.isPublished=@isPublished 
+          OR r.userId=@userId
+          OR EXISTS(
+            SELECT VALUE sw 
+            FROM sw IN r.shareWith 
+            WHERE sw.id = @userId
+          )
+        )
+        ORDER BY r.createdAt DESC
+      `,
       parameters: [
         {
           name: "@type",
@@ -257,7 +390,7 @@ export const FindAllPersonaForCurrentUser = async (): Promise<
         },
         {
           name: "@userId",
-          value: await userHashedId(),
+          value: currentUserId,
         },
       ],
     };
