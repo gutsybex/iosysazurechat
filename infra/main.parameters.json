@@ -3,12 +3,16 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "name": {
-      "value": "${AZURE_ENV_NAME=azurechat-solution}"
+      "value": "azchat"
     },
     "location": {
-      "value": "${AZURE_LOCATION}"
+      "value": "swedencentral"
     },
-    "openAILocation": {},
-    "dalleLocation": {}
+    "openAILocation": {
+      "value": "swedencentral"
+    },
+    "dalleLocation": {
+      "value": "swedencentral"
+    }
   }
 }
