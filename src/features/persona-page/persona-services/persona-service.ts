@@ -16,20 +16,24 @@ import { uniqueId } from "@/features/common/util";
 import { SqlQuerySpec } from "@azure/cosmos";
 import { PERSONA_ATTRIBUTE, PersonaModel, PersonaModelSchema } from "./models";
 
+interface SharedUser {
+  id: string;
+  displayName: string; // Corrected required fields
+  userPrincipalName: string;
+  mail?: string;
+}
+
 interface PersonaInput {
+  id?: string;
+  userId?: string;
   name: string;
   description: string;
   personaMessage: string;
   isPublished: boolean;
-  shareWith: Array<{
-    id: string;
-    givenName: string;
-    displayName: string;
-    userPrincipalName: string;
-    mail: string;
-  }>;
+  shareWith?: SharedUser[]; // Correct Type
 }
 
+// Find Persona By ID
 export const FindPersonaByID = async (
   id: string
 ): Promise<ServerActionResponse<PersonaModel>> => {
@@ -37,14 +41,8 @@ export const FindPersonaByID = async (
     const querySpec: SqlQuerySpec = {
       query: "SELECT * FROM root r WHERE r.type=@type AND r.id=@id",
       parameters: [
-        {
-          name: "@type",
-          value: PERSONA_ATTRIBUTE,
-        },
-        {
-          name: "@id",
-          value: id,
-        },
+        { name: "@type", value: PERSONA_ATTRIBUTE },
+        { name: "@id", value: id },
       ],
     };
 
@@ -55,37 +53,25 @@ export const FindPersonaByID = async (
     if (resources.length === 0) {
       return {
         status: "NOT_FOUND",
-        errors: [
-          {
-            message: "Persona not found",
-          },
-        ],
+        errors: [{ message: "Persona not found" }],
       };
     }
 
-    return {
-      status: "OK",
-      response: resources[0],
-    };
+    return { status: "OK", response: resources[0] };
   } catch (error) {
     return {
       status: "ERROR",
-      errors: [
-        {
-          message: `Error creating persona: ${error}`,
-        },
-      ],
+      errors: [{ message: `Error finding persona: ${error}` }],
     };
   }
 };
 
+// Create Persona
 export const CreatePersona = async (
   props: PersonaInput
 ): Promise<ServerActionResponse<PersonaModel>> => {
   try {
     const user = await getCurrentUser();
-
-    // Ensure shareWith is correctly assigned
     const modelToSave: PersonaModel = {
       id: uniqueId(),
       name: props.name,
@@ -95,41 +81,31 @@ export const CreatePersona = async (
       userId: await userHashedId(),
       createdAt: new Date(),
       type: "PERSONA",
-      shareWith: props.shareWith || [], // Use props.shareWith or default to an empty array
+      shareWith: props.shareWith || [], // Corrected Type Assignment
     };
 
-    // Validate the model before saving
     const valid = ValidateSchema(modelToSave);
 
-    if (valid.status !== "OK") {
-      return valid;
-    }
+    if (valid.status !== "OK") return valid;
 
-    // Save to Cosmos DB
     const { resource } = await HistoryContainer().items.create<PersonaModel>(
       modelToSave
     );
 
     if (resource) {
-      return {
-        status: "OK",
-        response: resource,
-      };
+      return { status: "OK", response: resource };
     } else {
       throw new Error("Error creating persona");
     }
   } catch (error) {
     return {
       status: "ERROR",
-      errors: [
-        {
-          message: `Error creating persona: ${error}`,
-        },
-      ],
+      errors: [{ message: `Error creating persona: ${error}` }],
     };
   }
 };
 
+// Upsert Persona
 export const UpsertPersona = async (
   personaInput: PersonaModel
 ): Promise<ServerActionResponse<PersonaModel>> => {
@@ -149,44 +125,29 @@ export const UpsertPersona = async (
           ? personaInput.isPublished
           : persona.isPublished,
         createdAt: new Date(),
-        shareWith: personaInput.shareWith,
+        shareWith: personaInput.shareWith || [],
       };
 
       const validationResponse = ValidateSchema(modelToUpdate);
-      if (validationResponse.status !== "OK") {
-        return validationResponse;
-      }
+      if (validationResponse.status !== "OK") return validationResponse;
 
       const { resource } = await HistoryContainer().items.upsert<PersonaModel>(
         modelToUpdate
       );
 
-      if (resource) {
-        return {
-          status: "OK",
-          response: resource,
-        };
-      }
-
-      return {
-        status: "ERROR",
-        errors: [
-          {
-            message: "Error updating persona",
-          },
-        ],
-      };
+      return resource
+        ? { status: "OK", response: resource }
+        : {
+            status: "ERROR",
+            errors: [{ message: "Error updating persona" }],
+          };
     }
 
     return personaResponse;
   } catch (error) {
     return {
       status: "ERROR",
-      errors: [
-        {
-          message: `Error updating persona: ${error}`,
-        },
-      ],
+      errors: [{ message: `Error updating persona: ${error}` }],
     };
   }
 };
@@ -245,6 +206,7 @@ export const UpsertPersona = async (
 //   }
 // };
 
+// Ensure Persona Operation
 export const EnsurePersonaOperation = async (
   personaId: string
 ): Promise<ServerActionResponse<PersonaModel>> => {
@@ -252,19 +214,16 @@ export const EnsurePersonaOperation = async (
   const currentUser = await getCurrentUser();
   const hashedId = await userHashedId();
 
-  if (personaResponse.status === "OK") {
-    if (currentUser.isAdmin || personaResponse.response.userId === hashedId) {
-      return personaResponse;
-    }
+  if (
+    personaResponse.status === "OK" &&
+    (currentUser.isAdmin || personaResponse.response.userId === hashedId)
+  ) {
+    return personaResponse;
   }
 
   return {
     status: "UNAUTHORIZED",
-    errors: [
-      {
-        message: `Persona not found with id: ${personaId}`,
-      },
-    ],
+    errors: [{ message: `Persona not found with id: ${personaId}` }],
   };
 };
 
@@ -358,6 +317,7 @@ export const DeletePersona = async (
 //   }
 // };
 
+// Find All Personas
 export const FindAllPersonaForCurrentUser = async (): Promise<
   ServerActionResponse<Array<PersonaModel>>
 > => {
@@ -371,7 +331,7 @@ export const FindAllPersonaForCurrentUser = async (): Promise<
         AND (
           r.isPublished=@isPublished 
           OR r.userId=@userId
-          OR EXISTS(
+          OR EXISTS (
             SELECT VALUE sw 
             FROM sw IN r.shareWith 
             WHERE sw.id = @userId
@@ -380,18 +340,9 @@ export const FindAllPersonaForCurrentUser = async (): Promise<
         ORDER BY r.createdAt DESC
       `,
       parameters: [
-        {
-          name: "@type",
-          value: PERSONA_ATTRIBUTE,
-        },
-        {
-          name: "@isPublished",
-          value: true,
-        },
-        {
-          name: "@userId",
-          value: currentUserId,
-        },
+        { name: "@type", value: PERSONA_ATTRIBUTE },
+        { name: "@isPublished", value: true },
+        { name: "@userId", value: currentUserId },
       ],
     };
 
@@ -399,22 +350,16 @@ export const FindAllPersonaForCurrentUser = async (): Promise<
       .items.query<PersonaModel>(querySpec)
       .fetchAll();
 
-    return {
-      status: "OK",
-      response: resources,
-    };
+    return { status: "OK", response: resources };
   } catch (error) {
     return {
       status: "ERROR",
-      errors: [
-        {
-          message: `Error finding persona: ${error}`,
-        },
-      ],
+      errors: [{ message: `Error finding personas: ${error}` }],
     };
   }
 };
 
+// Create Persona Chat
 export const CreatePersonaChat = async (
   personaId: string
 ): Promise<ServerActionResponse<ChatThreadModel>> => {
@@ -424,7 +369,7 @@ export const CreatePersonaChat = async (
   if (personaResponse.status === "OK") {
     const persona = personaResponse.response;
 
-    const response = await UpsertChatThread({
+    return await UpsertChatThread({
       name: persona.name,
       useName: user.name,
       userId: await userHashedId(),
@@ -438,12 +383,10 @@ export const CreatePersonaChat = async (
       personaMessageTitle: persona.name,
       extension: [],
     });
-
-    return response;
   }
   return personaResponse;
 };
-
+// Validate Schema
 const ValidateSchema = (model: PersonaModel): ServerActionResponse => {
   const validatedFields = PersonaModelSchema.safeParse(model);
 
@@ -454,8 +397,5 @@ const ValidateSchema = (model: PersonaModel): ServerActionResponse => {
     };
   }
 
-  return {
-    status: "OK",
-    response: model,
-  };
+  return { status: "OK", response: model };
 };

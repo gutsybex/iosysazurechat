@@ -6,7 +6,7 @@ import {
   UpsertPersona,
 } from "./persona-services/persona-service";
 
-// Define the User type
+// Correct User type definition
 interface User {
   id: string;
   displayName: string;
@@ -23,7 +23,7 @@ class PersonaState {
     isPublished: false,
     type: "PERSONA",
     userId: "",
-    shareWith: [], // Default shareWith as an empty array
+    shareWith: [], // Default empty array
   };
 
   public isOpened: boolean = false;
@@ -74,9 +74,10 @@ export const addOrUpdatePersona = async (previous: any, formData: FormData) => {
 
   const model = FormDataToPersonaModel(formData);
 
-  model.id && model.id !== ""
-    ? await UpsertPersona(model)
-    : await CreatePersona(model);
+  const response =
+    model.id && model.id !== ""
+      ? await UpsertPersona(model)
+      : await CreatePersona(model);
 
   if (response.status === "OK") {
     personaStore.updateOpened(false);
@@ -87,15 +88,22 @@ export const addOrUpdatePersona = async (previous: any, formData: FormData) => {
   return response;
 };
 
+// Corrected Type-safe Model Conversion
 export const FormDataToPersonaModel = (formData: FormData): PersonaModel => {
-  // Extract shareWith data from formData and parse it
-  const shareWithData = formData.get("shareWith") as string;
+  const shareWithData = formData.get("shareWith") as string | null;
   let shareWith: User[] = [];
 
   if (shareWithData) {
     try {
-      shareWith = JSON.parse(shareWithData);
-      console.log("Parsed shareWith:", shareWith);
+      const parsedShareWith = JSON.parse(shareWithData) as Partial<User>[];
+
+      // Correct type-checking filter
+      shareWith = parsedShareWith.filter(
+        (user): user is User =>
+          typeof user.id === "string" &&
+          typeof user.displayName === "string" &&
+          typeof user.userPrincipalName === "string"
+      );
     } catch (e) {
       console.error("Error parsing shareWith:", e);
     }
@@ -106,10 +114,10 @@ export const FormDataToPersonaModel = (formData: FormData): PersonaModel => {
     name: formData.get("name") as string,
     description: formData.get("description") as string,
     personaMessage: formData.get("personaMessage") as string,
-    isPublished: formData.get("isPublished") === "on" ? true : false,
+    isPublished: formData.get("isPublished") === "on",
     userId: "", // Will be set on the server
     createdAt: new Date(),
     type: PERSONA_ATTRIBUTE,
-    shareWith, // Include shareWith field
+    shareWith, // Correctly typed list
   };
 };

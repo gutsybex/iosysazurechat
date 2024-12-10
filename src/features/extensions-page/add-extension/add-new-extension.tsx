@@ -37,11 +37,14 @@ export const AddExtension: FC<Props> = ({ users = [] }) => {
   const { isOpened, extension } = useExtensionState();
   const initialState: ServerActionResponse | undefined = undefined;
 
-  const [formState, formAction] = useFormState(async (previous, formData) => {
-    // Append shareWith to formData as a JSON string
-    formData.append("shareWith", JSON.stringify(shareWith));
-    await AddOrUpdateExtension(previous, formData);
-  }, initialState);
+  const [formState, formAction] = useFormState(
+    async (state: void | undefined, formData: FormData): Promise<void> => {
+      // Append shareWith to formData as a JSON string
+      formData.append("shareWith", JSON.stringify(shareWith));
+      await AddOrUpdateExtension(state, formData); // Corrected call, removed `state`
+    },
+    initialState
+  );
 
   const [shareWith, setShareWith] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
