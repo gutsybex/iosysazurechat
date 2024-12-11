@@ -4,12 +4,6 @@ import { z } from "zod";
 export const PERSONA_ATTRIBUTE = "PERSONA";
 export type PersonaModel = z.infer<typeof PersonaModelSchema>;
 
-const UserSchema = z.object({
-  id: z.string(),
-  displayName: z.string().optional(),
-  userPrincipalName: z.string().optional(),
-});
-
 export const PersonaModelSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -34,5 +28,13 @@ export const PersonaModelSchema = z.object({
   isPublished: z.boolean(),
   type: z.literal(PERSONA_ATTRIBUTE),
   createdAt: z.date(),
-  shareWith: z.array(UserSchema).optional(), // Corrected to array of users
+  shareWith: z
+    .array(
+      z.object({
+        id: z.string(),
+        displayName: z.string(),
+        userPrincipalName: z.string(),
+      })
+    )
+    .optional(),
 });

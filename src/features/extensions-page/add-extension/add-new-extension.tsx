@@ -22,6 +22,8 @@ import {
   useExtensionState,
 } from "../extension-store";
 import { LoadingIndicator } from "@/features/ui/loading";
+import { EndpointHeader } from "./endpoint-header";
+import { AddFunction } from "./add-function";
 
 interface User {
   id: string;
@@ -45,7 +47,6 @@ export const AddExtension: FC<Props> = ({ users = [] }) => {
     },
     initialState
   );
-
   const [shareWith, setShareWith] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -169,6 +170,8 @@ export const AddExtension: FC<Props> = ({ users = [] }) => {
                   placeholder="Describe specialties and the steps to execute the extension"
                 />
               </div>
+              <EndpointHeader />
+              <AddFunction />
             </div>
           </ScrollArea>
 

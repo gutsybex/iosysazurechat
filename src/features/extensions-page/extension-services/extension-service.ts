@@ -133,6 +133,7 @@ export const CreateExtension = async (
       return validatedFields;
     }
   } catch (error) {
+    console.log("error creating ext: ", error);
     return {
       status: "ERROR",
       errors: [

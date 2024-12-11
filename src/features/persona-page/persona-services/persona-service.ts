@@ -18,7 +18,7 @@ import { PERSONA_ATTRIBUTE, PersonaModel, PersonaModelSchema } from "./models";
 
 interface SharedUser {
   id: string;
-  displayName: string; // Corrected required fields
+  displayName: string;
   userPrincipalName: string;
   mail?: string;
 }
@@ -30,7 +30,7 @@ interface PersonaInput {
   description: string;
   personaMessage: string;
   isPublished: boolean;
-  shareWith?: SharedUser[]; // Correct Type
+  shareWith?: SharedUser[];
 }
 
 // Find Persona By ID
@@ -67,6 +67,7 @@ export const FindPersonaByID = async (
 };
 
 // Create Persona
+
 export const CreatePersona = async (
   props: PersonaInput
 ): Promise<ServerActionResponse<PersonaModel>> => {
@@ -80,8 +81,8 @@ export const CreatePersona = async (
       isPublished: user.isAdmin ? props.isPublished : false,
       userId: await userHashedId(),
       createdAt: new Date(),
-      type: "PERSONA",
-      shareWith: props.shareWith || [], // Corrected Type Assignment
+      type: PERSONA_ATTRIBUTE,
+      shareWith: props.shareWith || [],
     };
 
     const valid = ValidateSchema(modelToSave);
@@ -91,7 +92,6 @@ export const CreatePersona = async (
     const { resource } = await HistoryContainer().items.create<PersonaModel>(
       modelToSave
     );
-
     if (resource) {
       return { status: "OK", response: resource };
     } else {
@@ -323,6 +323,7 @@ export const FindAllPersonaForCurrentUser = async (): Promise<
 > => {
   try {
     const currentUserId = await userHashedId();
+    console.log(`xasx_120${currentUserId}_xfsafgx`);
 
     const querySpec: SqlQuerySpec = {
       query: `
