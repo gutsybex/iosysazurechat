@@ -103,6 +103,7 @@ export const CreateExtension = async (
       type: "EXTENSION",
       functions: inputModel.functions,
       headers: inputModel.headers,
+      shareWith: inputModel.shareWith || [],
     };
 
     const validatedFields = validateSchema(modelToSave);
