@@ -84,5 +84,5 @@ export const ExtensionModelSchema = z.object({
         displayName: z.string(),
         userPrincipalName: z.string(),
       })
-    ),
+    ).optional(),
 });
