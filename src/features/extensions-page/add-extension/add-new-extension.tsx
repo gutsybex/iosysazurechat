@@ -82,6 +82,10 @@ export const AddExtension: FC<Props> = ({ users = [] }) => {
       open={isOpened}
       onOpenChange={(value) => {
         extensionStore.updateOpened(value);
+        if (!value) {
+          setShareWith([]);
+          setSearchTerm("");
+        }
       }}
     >
       <SheetContent className="min-w-[680px] flex flex-col">

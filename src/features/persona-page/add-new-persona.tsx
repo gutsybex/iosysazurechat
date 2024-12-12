@@ -86,6 +86,10 @@ export const AddNewPersona: FC<Props> = ({ users }) => {
       open={isOpened}
       onOpenChange={(value) => {
         personaStore.updateOpened(value);
+        if (!value) {
+          setShareWith([]);
+          setSearchTerm("");
+        }
       }}
     >
       <SheetContent className="min-w-[480px] sm:w-[540px] flex flex-col">

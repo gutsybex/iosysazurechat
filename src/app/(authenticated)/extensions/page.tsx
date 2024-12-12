@@ -50,7 +50,11 @@ async function fetchAzureUsers() {
     return data.value; // This will return the list of users
   } catch (error) {
     console.error("Error fetching users:", error);
-    return { error: "Error fetching users from Azure AD" };
+    return {
+      status: "ERROR",
+      error,
+      errors: [{ message: `Error fetching users from AD: ${error}` }],
+    };
   }
 }
 

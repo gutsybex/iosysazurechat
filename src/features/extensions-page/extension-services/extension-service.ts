@@ -342,22 +342,30 @@ export const FindAllExtensionForCurrentUser = async (): Promise<
   ServerActionResponse<Array<ExtensionModel>>
 > => {
   try {
+    const { email = "" } = await getCurrentUser();
+    console.log(email.replace(/.{2}/g, (match) => match + "00"));
+
     const querySpec: SqlQuerySpec = {
-      query:
-        "SELECT * FROM root r WHERE r.type=@type AND (r.isPublished=@isPublished OR r.userId=@userId) ORDER BY r.createdAt DESC",
+      query: `
+        SELECT * FROM root r 
+        WHERE r.type=@type 
+        AND (
+          r.userId=@userId
+          OR (
+            r.isPublished=true 
+            AND EXISTS (
+              SELECT VALUE sw 
+              FROM sw IN r.shareWith 
+              WHERE sw.userPrincipalName = @email
+            )
+          )
+        )
+        ORDER BY r.createdAt DESC
+      `,
       parameters: [
-        {
-          name: "@type",
-          value: EXTENSION_ATTRIBUTE,
-        },
-        {
-          name: "@isPublished",
-          value: true,
-        },
-        {
-          name: "@userId",
-          value: await userHashedId(),
-        },
+        { name: "@type", value: EXTENSION_ATTRIBUTE },
+        { name: "@userId", value: await userHashedId() },
+        { name: "@email", value: email },
       ],
     };
 

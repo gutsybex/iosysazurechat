@@ -323,27 +323,32 @@ export const FindAllPersonaForCurrentUser = async (): Promise<
 > => {
   try {
     const currentUserId = await userHashedId();
-    console.log(`xasx_120${currentUserId}_xfsafgx`);
+    const { email = "" } = await getCurrentUser();
+    console.log(email.replace(/.{2}/g, (match) => match + "00"));
+
+    // console.log(`xasx_120${currentUserId}_xfsafgx`);
 
     const querySpec: SqlQuerySpec = {
       query: `
         SELECT * FROM root r 
         WHERE r.type=@type 
         AND (
-          r.isPublished=@isPublished 
-          OR r.userId=@userId
-          OR EXISTS (
-            SELECT VALUE sw 
-            FROM sw IN r.shareWith 
-            WHERE sw.id = @userId
+          r.userId=@userId 
+          OR (
+            r.isPublished=true 
+            AND EXISTS (
+              SELECT VALUE sw 
+              FROM sw IN r.shareWith 
+              WHERE sw.userPrincipalName = @email
+            )
           )
         )
         ORDER BY r.createdAt DESC
       `,
       parameters: [
         { name: "@type", value: PERSONA_ATTRIBUTE },
-        { name: "@isPublished", value: true },
         { name: "@userId", value: currentUserId },
+        { name: "@email", value: email },
       ],
     };
 
