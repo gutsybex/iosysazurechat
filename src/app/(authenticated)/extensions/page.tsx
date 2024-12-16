@@ -47,7 +47,7 @@ async function fetchAzureUsers() {
     }
 
     const data = await response.json();
-    console.error("XXX_Users:", data);
+    console.log("XXX_Users:", data);
     return data.value; // This will return the list of users
   } catch (error) {
     console.error("Error fetching users:", error);
