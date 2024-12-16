@@ -324,9 +324,6 @@ export const FindAllPersonaForCurrentUser = async (): Promise<
   try {
     const currentUserId = await userHashedId();
     const { email = "" } = await getCurrentUser();
-    console.log(email.replace(/.{2}/g, (match) => match + "00"));
-
-    // console.log(`xasx_120${currentUserId}_xfsafgx`);
 
     const querySpec: SqlQuerySpec = {
       query: `

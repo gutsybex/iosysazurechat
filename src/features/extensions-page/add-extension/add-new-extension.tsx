@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { Button } from "../../ui/button";
@@ -77,15 +77,18 @@ export const AddExtension: FC<Props> = ({ users = [] }) => {
     );
   };
 
+  useEffect(() => {
+    if (!isOpened) {
+      setShareWith([]);
+      setSearchTerm("");
+    }
+  }, [isOpened]);
+
   return (
     <Sheet
       open={isOpened}
       onOpenChange={(value) => {
         extensionStore.updateOpened(value);
-        if (!value) {
-          setShareWith([]);
-          setSearchTerm("");
-        }
       }}
     >
       <SheetContent className="min-w-[680px] flex flex-col">

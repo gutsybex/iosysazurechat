@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { ServerActionResponse } from "../common/server-action-response";
 import { Button } from "../ui/button";
@@ -81,15 +81,18 @@ export const AddNewPersona: FC<Props> = ({ users }) => {
     }
   };
 
+  useEffect(() => {
+    if (!isOpened) {
+      setShareWith([]);
+      setSearchTerm("");
+    }
+  }, [isOpened]);
+
   return (
     <Sheet
       open={isOpened}
       onOpenChange={(value) => {
         personaStore.updateOpened(value);
-        if (!value) {
-          setShareWith([]);
-          setSearchTerm("");
-        }
       }}
     >
       <SheetContent className="min-w-[480px] sm:w-[540px] flex flex-col">
