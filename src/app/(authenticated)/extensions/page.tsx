@@ -2,7 +2,6 @@ import { ExtensionPage } from "@/features/extensions-page/extension-page";
 import { FindAllExtensionForCurrentUser } from "@/features/extensions-page/extension-services/extension-service";
 import { DisplayError } from "@/features/ui/error/display-error";
 
-
 // This function fetches users from Azure AD
 async function fetchAzureUsers() {
   try {
@@ -32,46 +31,24 @@ async function fetchAzureUsers() {
     }
 
     // Microsoft Graph API URL to get all users
-    let graphApiUrl = "https://graph.microsoft.com/v1.0/users?$filter=userType eq 'Member' and accountEnabled eq true and endswith(userPrincipalName, '@maxongroup.com')&$count=true&$top=999"
-    let allUsers: any[] = [];
-    var apiCallCount = 1;
+    const graphApiUrl = "https://graph.microsoft.com/v1.0/users";
 
-    // Fetch users until there are no more pages
-    while (graphApiUrl) {
-      const response = await fetch(graphApiUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token.token}`,
-          "Content-Type": "application/json",
-          "ConsistencyLevel":"eventual"
-        },
-        
-      });
+    // Fetch the users
+    const response = await fetch(graphApiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token.token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-      if (!response.ok) {
-        
-        throw new Error(`Error fetching users: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      allUsers = [...allUsers, ...data.value];
-      graphApiUrl = data["@odata.nextLink"];
-      console.log("User Count: ",data["@odata.count"]);
-      console.log("APICall Count: ",apiCallCount++);
-      console.log("ALL User Count: ",allUsers.length);
+    if (!response.ok) {
+      throw new Error(`Error fetching users: ${response.statusText}`);
     }
 
-    return {
-      status: "OK",
-      error: [
-        {
-          message: '',
-        },
-      ],
-      errors: [{ message:'' }],
-      users:allUsers // This will return the list of users
-
-    };
+    const data = await response.json();
+    console.log("XXX_Users:", data);
+    return data.value; // This will return the list of users
   } catch (error) {
     console.error("Error fetching users:", error);
     return {
@@ -92,14 +69,14 @@ export default async function Home() {
   // Fetch users from Azure AD
   const usersResponse = await fetchAzureUsers();
 
-  if (usersResponse.status== "ERROR") {
-    return <DisplayError errors={usersResponse.errors} />;
+  if (usersResponse.error) {
+    return <DisplayError errors={[usersResponse.error]} />;
   }
 
   return (
     <ExtensionPage
       extensions={extensionResponse.response}
-      users={usersResponse.users!} // Pass the users to the component
+      users={usersResponse} // Pass the users to the component
     />
   );
 }
