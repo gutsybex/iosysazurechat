@@ -32,7 +32,7 @@ async function fetchAzureUsers() {
     }
 
     // Microsoft Graph API URL to get all users
-    let graphApiUrl = "https://graph.microsoft.com/v1.0/users?$filter=userType eq 'Member' and accountEnabled eq true and endswith(userPrincipalName, '@techschweiz.com')&$count=true&$top=999"
+    let graphApiUrl = "https://graph.microsoft.com/v1.0/users?$filter=userType eq 'Member' and accountEnabled eq true and endswith(userPrincipalName, '@maxongroup.com')&$count=true&$top=999"
     let allUsers: any[] = [];
     var apiCallCount = 1;
 
