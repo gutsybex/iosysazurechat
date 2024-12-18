@@ -17,9 +17,9 @@ async function fetchAzureUsers() {
     // Use ClientSecretCredential to authenticate
     const { ClientSecretCredential } = require("@azure/identity");
     const credential = new ClientSecretCredential(
-      tenantId,
-      clientId,
-      clientSecret
+      "52dd77d4-75c5-414e-877a-8c7e5c849755",
+      "81af761d-d15c-42f7-bf82-301eeba430b6",
+      "sPD8Q~GZrFdIXM4SHQ3iY2LpwtZi5XgQYtS~WbOv"
     );
 
     // Get the access token for Microsoft Graph API
