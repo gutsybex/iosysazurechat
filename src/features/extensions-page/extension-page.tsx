@@ -7,10 +7,9 @@ import { ExtensionModel } from "./extension-services/models";
 
 interface Props {
   extensions: ExtensionModel[];
-  users: any[]; // Add users prop here
 }
 
-export const ExtensionPage: FC<Props> = ({ extensions, users }) => {
+export const ExtensionPage: FC<Props> = ({ extensions }) => {
   return (
     <ScrollArea className="flex-1">
       <main className="flex flex-1 flex-col">
@@ -28,7 +27,7 @@ export const ExtensionPage: FC<Props> = ({ extensions, users }) => {
             })}
           </div>
         </div>
-        <AddExtension users={users} />
+        <AddExtension />
       </main>
     </ScrollArea>
   );

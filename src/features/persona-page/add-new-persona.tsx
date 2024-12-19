@@ -23,19 +23,21 @@ import {
   personaStore,
   usePersonaState,
 } from "./persona-store";
+import { fetchUsers } from "./persona-services/persona-service";
 
 // Define the types for users (you can refine this if needed)
 interface User {
   id: string;
   displayName: string;
   userPrincipalName: string;
+  givenName?: string;
+  surname?: string;
+  mail?: string;
 }
 
-interface Props {
-  users: User[]; // Accept users prop
-}
+interface Props {}
 
-export const AddNewPersona: FC<Props> = ({ users }) => {
+export const AddNewPersona: FC<Props> = ({}) => {
   const initialState: ServerActionResponse | undefined = undefined;
   const { isOpened, persona } = usePersonaState();
   const [formState, formAction] = useFormState(
@@ -47,20 +49,43 @@ export const AddNewPersona: FC<Props> = ({ users }) => {
 
   const [shareWith, setShareWith] = useState<User[]>([]); // State for selected users
   const [searchTerm, setSearchTerm] = useState(""); // State for search input
+  const [matchedUsers, setMatchedUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Debounced search for users
+  useEffect(() => {
+    async function getUsers(term: string) {
+      if (!term || term.length < 3) {
+        setMatchedUsers([]);
+        return [];
+      }
+      try {
+        setLoading(true);
+        const fetchedUsers = await fetchUsers(term);
+        setMatchedUsers(fetchedUsers); // Update state with fetched users
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        console.error("Error fetching users:", error);
+      }
+    }
+
+    const debounce = setTimeout(() => {
+      getUsers(searchTerm); // Call async function
+    }, 300); // Debounce delay (300ms)
+
+    return () => clearTimeout(debounce); // Cleanup the timeout
+  }, [searchTerm]);
 
   // Filter users based on the search term, excluding already selected users
-  const filteredUsers = users
-    .filter((user) => !shareWith.some((selected) => selected.id === user.id)) // Exclude selected users
-    .filter(
-      (user) =>
-        user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || // Search by displayName
-        user.userPrincipalName.toLowerCase().includes(searchTerm.toLowerCase()) // or userPrincipalName
-    );
+  const filteredUsers = matchedUsers.filter(
+    (user) => !shareWith.some((selected) => selected.id === user.id)
+  );
 
   // Handle adding user to "Share with" list
   const handleSelectUser = (user: User) => {
     setShareWith((prev) => [...prev, user]);
-    setSearchTerm(""); // Clear the search field after selection
+    // setSearchTerm(""); // Clear the search field after selection
   };
 
   // Handle removing user from "Share with" list
@@ -80,6 +105,14 @@ export const AddNewPersona: FC<Props> = ({ users }) => {
       );
     }
   };
+
+  useEffect(() => {
+    if (isOpened && persona.id) {
+      if (persona.shareWith && persona.shareWith.length) {
+        setShareWith([...persona.shareWith]);
+      }
+    }
+  }, [isOpened, persona.id, persona.shareWith]);
 
   useEffect(() => {
     if (!isOpened) {
@@ -128,7 +161,10 @@ export const AddNewPersona: FC<Props> = ({ users }) => {
               </div>
               {/* "Share With" dropdown with chips */}
               <div className="grid gap-2">
-                <Label htmlFor="shareWith">Share With</Label>
+                <Label htmlFor="shareWith" className="flex gap-2 items-center">
+                  Share With
+                  <LoadingIndicator isLoading={loading} />
+                </Label>
                 <div className="relative">
                   {/* Chips for selected users */}
                   <div className="flex flex-wrap gap-2 mb-2">

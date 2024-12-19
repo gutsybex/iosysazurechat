@@ -24,43 +24,69 @@ import {
 import { LoadingIndicator } from "@/features/ui/loading";
 import { EndpointHeader } from "./endpoint-header";
 import { AddFunction } from "./add-function";
+import { fetchUsers } from "../extension-services/extension-service";
 
 interface User {
   id: string;
   displayName: string;
   userPrincipalName: string;
+  givenName?: string;
+  surname?: string;
+  mail?: string;
 }
 
-interface Props {
-  users?: User[];
-}
+interface Props {}
 
-export const AddExtension: FC<Props> = ({ users = [] }) => {
+export const AddExtension: FC<Props> = ({}) => {
   const { isOpened, extension } = useExtensionState();
   const initialState: ServerActionResponse | undefined = undefined;
 
   const [formState, formAction] = useFormState(
     async (state: void | undefined, formData: FormData): Promise<void> => {
-      // Append shareWith to formData as a JSON string
       formData.append("shareWith", JSON.stringify(shareWith));
-      await AddOrUpdateExtension(state, formData); // Corrected call, removed `state`
+      await AddOrUpdateExtension(state, formData);
     },
     initialState
   );
   const [shareWith, setShareWith] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [matchedUsers, setMatchedUsers] = useState<User[]>([]);
 
-  const filteredUsers = users
-    .filter((user) => !shareWith.some((selected) => selected.id === user.id))
-    .filter(
-      (user) =>
-        user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.userPrincipalName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  // Debounced search for users
+  useEffect(() => {
+    async function getUsers(term: string) {
+      if (!term || term.length < 3) {
+        setMatchedUsers([]);
+        return [];
+      }
+      try {
+        setLoading(true);
+        const fetchedUsers = await fetchUsers(term);
+        setMatchedUsers(fetchedUsers); // Update state with fetched users
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+
+        console.error("Error fetching users:", error);
+      }
+    }
+
+    const debounce = setTimeout(() => {
+      getUsers(searchTerm); // Call async function
+    }, 300); // Debounce delay (300ms)
+
+    return () => clearTimeout(debounce); // Cleanup the timeout
+  }, [searchTerm]);
+
+  const filteredUsers = matchedUsers.filter(
+    (user) => !shareWith.some((selected) => selected.id === user.id)
+  );
 
   const handleSelectUser = (user: User) => {
     setShareWith((prev) => [...prev, user]);
-    setSearchTerm("");
+    // setSearchTerm("");
+    // setMatchedUsers([]); // Clear matched users after selection
   };
 
   const handleRemoveUser = (userId: string) => {
@@ -76,6 +102,14 @@ export const AddExtension: FC<Props> = ({ users = [] }) => {
       </div>
     );
   };
+
+  useEffect(() => {
+    if (isOpened && extension.id) {
+      if (extension.shareWith && extension.shareWith.length) {
+        setShareWith([...extension.shareWith]);
+      }
+    }
+  }, [isOpened, extension.id, extension.shareWith]);
 
   useEffect(() => {
     if (!isOpened) {
@@ -125,7 +159,10 @@ export const AddExtension: FC<Props> = ({ users = [] }) => {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shareWith">Share With</Label>
+                <Label htmlFor="shareWith" className="flex gap-2 items-center">
+                  Share With
+                  <LoadingIndicator isLoading={loading} />
+                </Label>
                 <div className="relative">
                   <div className="flex flex-wrap gap-2 mb-2">
                     {shareWith.map((user) => (

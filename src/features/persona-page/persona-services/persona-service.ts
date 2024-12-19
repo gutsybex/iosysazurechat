@@ -402,3 +402,75 @@ const ValidateSchema = (model: PersonaModel): ServerActionResponse => {
 
   return { status: "OK", response: model };
 };
+
+export async function fetchUsers(searchedTerm: string) {
+  if (!searchedTerm || searchedTerm.length < 3) return;
+
+  try {
+    const tenantId = process.env.AZURE_AD_TENANT_ID;
+    const clientId = process.env.AZURE_AD_CLIENT_ID;
+    const clientSecret = process.env.AZURE_AD_CLIENT_SECRET;
+
+    if (!tenantId || !clientId || !clientSecret) {
+      throw new Error("Missing required environment variables");
+    }
+    const { ClientSecretCredential } = require("@azure/identity");
+
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientId,
+      clientSecret
+    );
+
+    // Get the access token for Microsoft Graph API
+    const token = await credential.getToken(
+      "https://graph.microsoft.com/.default"
+    );
+
+    if (!token) {
+      throw new Error("Unable to retrieve token from Azure AD");
+    }
+
+    // Construct dynamic query for search filters
+    if (!searchedTerm) {
+      throw new Error("Searched term is required");
+    }
+
+    const searchKeys = [
+      "displayName",
+      "givenName",
+      "surname",
+      "mail",
+      "userPrincipalName",
+    ];
+
+    const filterConditions = searchKeys
+      .map((key) => `startswith(${key},'${searchedTerm}')`)
+      .join(" or ");
+
+    const graphApiUrl = `https://graph.microsoft.com/v1.0/users?$filter=${filterConditions}`;
+
+    // Fetch the users
+    const response = await fetch(graphApiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token.token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error fetching users: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.value; // This will return the list of users
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return {
+      status: "ERROR",
+      error,
+      errors: [{ message: `Error fetching users from AD: ${error}` }],
+    };
+  }
+}

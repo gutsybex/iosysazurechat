@@ -7,10 +7,9 @@ import { PersonaModel } from "./persona-services/models";
 
 interface ChatPersonaProps {
   personas: PersonaModel[];
-  users: any[];
 }
 
-export const ChatPersonaPage: FC<ChatPersonaProps> = ({ personas, users }) => {
+export const ChatPersonaPage: FC<ChatPersonaProps> = ({ personas }) => {
   return (
     <ScrollArea className="flex-1">
       <main className="flex flex-1 flex-col">
@@ -22,7 +21,7 @@ export const ChatPersonaPage: FC<ChatPersonaProps> = ({ personas, users }) => {
             ))}
           </div>
         </div>
-        <AddNewPersona users={users} />
+        <AddNewPersona />
       </main>
     </ScrollArea>
   );
