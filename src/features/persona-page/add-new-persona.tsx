@@ -24,6 +24,13 @@ import {
   usePersonaState,
 } from "./persona-store";
 import { fetchUsers } from "./persona-services/persona-service";
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/ui/tooltip";
 
 // Define the types for users (you can refine this if needed)
 interface User {
@@ -51,6 +58,7 @@ export const AddNewPersona: FC<Props> = ({}) => {
   const [searchTerm, setSearchTerm] = useState(""); // State for search input
   const [matchedUsers, setMatchedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isPublic, setIsPublic] = useState(persona.isPublished);
 
   // Debounced search for users
   useEffect(() => {
@@ -99,8 +107,37 @@ export const AddNewPersona: FC<Props> = ({}) => {
     if (data?.user?.isAdmin) {
       return (
         <div className="flex items-center space-x-2">
-          <Switch name="isPublished" defaultChecked={persona.isPublished} />
-          <Label htmlFor="description">Publish</Label>
+          <Switch
+            name="isPublished"
+            defaultChecked={persona.isPublished}
+            checked={isPublic}
+            onCheckedChange={(checked) => setIsPublic(checked)}
+          />
+          <TooltipProvider>
+            <div>
+              <label htmlFor="description" className="flex items-center">
+                Share with entire Org
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info
+                      size={16}
+                      className="ml-2 cursor-pointer"
+                      aria-label="Info"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent
+                    style={{ maxWidth: "24rem" }}
+                    side="top"
+                    align="center"
+                  >
+                    This will share with the entire organization. All users will
+                    be able to see this. Sharing with specific users will be
+                    disabled.
+                  </TooltipContent>
+                </Tooltip>
+              </label>
+            </div>
+          </TooltipProvider>
         </div>
       );
     }
@@ -115,11 +152,11 @@ export const AddNewPersona: FC<Props> = ({}) => {
   }, [isOpened, persona.id, persona.shareWith]);
 
   useEffect(() => {
-    if (!isOpened) {
+    if (!isOpened || isPublic) {
       setShareWith([]);
       setSearchTerm("");
     }
-  }, [isOpened]);
+  }, [isOpened, isPublic]);
 
   return (
     <Sheet
@@ -190,6 +227,7 @@ export const AddNewPersona: FC<Props> = ({}) => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search for users by name or email"
+                    disabled={isPublic}
                   />
                   {searchTerm && (
                     <div className="absolute z-10 rounded-lg w-full mt-2 max-h-40 overflow-y-auto bg-[#020817] border border-gray-700 text-white">

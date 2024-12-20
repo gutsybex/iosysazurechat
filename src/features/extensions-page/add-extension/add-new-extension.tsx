@@ -25,6 +25,13 @@ import { LoadingIndicator } from "@/features/ui/loading";
 import { EndpointHeader } from "./endpoint-header";
 import { AddFunction } from "./add-function";
 import { fetchUsers } from "../extension-services/extension-service";
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/ui/tooltip";
 
 interface User {
   id: string;
@@ -52,6 +59,7 @@ export const AddExtension: FC<Props> = ({}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [matchedUsers, setMatchedUsers] = useState<User[]>([]);
+  const [isPublic, setIsPublic] = useState(extension?.isPublished);
 
   // Debounced search for users
   useEffect(() => {
@@ -97,8 +105,37 @@ export const AddExtension: FC<Props> = ({}) => {
     if (!extension) return null;
     return (
       <div className="flex items-center space-x-2">
-        <Switch name="isPublished" defaultChecked={extension.isPublished} />
-        <Label htmlFor="description">Publish</Label>
+        <Switch
+          name="isPublished"
+          defaultChecked={extension.isPublished}
+          checked={isPublic}
+          onCheckedChange={(checked) => setIsPublic(checked)}
+        />
+        <TooltipProvider>
+          <div>
+            <label htmlFor="description" className="flex items-center">
+              Share with entire Org
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info
+                    size={16}
+                    className="ml-2 cursor-pointer"
+                    aria-label="Info"
+                  />
+                </TooltipTrigger>
+                <TooltipContent
+                  style={{ maxWidth: "24rem" }}
+                  side="top"
+                  align="center"
+                >
+                  This will share with the entire organization. All users will
+                  be able to see this. Sharing with specific users will be
+                  disabled.
+                </TooltipContent>
+              </Tooltip>
+            </label>
+          </div>
+        </TooltipProvider>
       </div>
     );
   };
@@ -112,11 +149,11 @@ export const AddExtension: FC<Props> = ({}) => {
   }, [isOpened, extension.id, extension.shareWith]);
 
   useEffect(() => {
-    if (!isOpened) {
+    if (!isOpened || isPublic) {
       setShareWith([]);
       setSearchTerm("");
     }
-  }, [isOpened]);
+  }, [isOpened, isPublic]);
 
   return (
     <Sheet
@@ -187,6 +224,7 @@ export const AddExtension: FC<Props> = ({}) => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search for users by name or email"
+                    disabled={isPublic}
                   />
 
                   {searchTerm && filteredUsers.length > 0 && (
