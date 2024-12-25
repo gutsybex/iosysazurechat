@@ -116,7 +116,7 @@ export const AddNewPersona: FC<Props> = ({}) => {
           <TooltipProvider>
             <div>
               <label htmlFor="description" className="flex items-center">
-                Share with entire Org
+                Share with entire organization
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Info
@@ -158,6 +158,12 @@ export const AddNewPersona: FC<Props> = ({}) => {
     }
   }, [isOpened, isPublic]);
 
+  useEffect(() => {
+    if (persona) {
+      setIsPublic(persona.isPublished);
+    }
+  }, [persona.isPublished]);
+
   return (
     <Sheet
       open={isOpened}
@@ -196,6 +202,7 @@ export const AddNewPersona: FC<Props> = ({}) => {
                   placeholder="Name of your persona"
                 />
               </div>
+              <PublicSwitch />
               {/* "Share With" dropdown with chips */}
               <div className="grid gap-2">
                 <Label htmlFor="shareWith" className="flex gap-2 items-center">
@@ -267,7 +274,6 @@ export const AddNewPersona: FC<Props> = ({}) => {
             </div>
           </ScrollArea>
           <SheetFooter className="py-2 flex sm:justify-between flex-row">
-            <PublicSwitch />
             <input
               type="hidden"
               name="shareWith"

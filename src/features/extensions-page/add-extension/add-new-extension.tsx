@@ -114,7 +114,7 @@ export const AddExtension: FC<Props> = ({}) => {
         <TooltipProvider>
           <div>
             <label htmlFor="description" className="flex items-center">
-              Share with entire Org
+              Share with entire organization
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info
@@ -155,6 +155,12 @@ export const AddExtension: FC<Props> = ({}) => {
     }
   }, [isOpened, isPublic]);
 
+  useEffect(() => {
+    if (extension) {
+      setIsPublic(extension.isPublished);
+    }
+  }, [extension.isPublished]);
+
   return (
     <Sheet
       open={isOpened}
@@ -183,18 +189,7 @@ export const AddExtension: FC<Props> = ({}) => {
                   placeholder="Name of your Extension"
                 />
               </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="description">Short description</Label>
-                <Input
-                  type="text"
-                  required
-                  defaultValue={extension?.description}
-                  name="description"
-                  placeholder="Short description"
-                />
-              </div>
-
+              <PublicSwitch />
               <div className="grid gap-2">
                 <Label htmlFor="shareWith" className="flex gap-2 items-center">
                   Share With
@@ -242,6 +237,16 @@ export const AddExtension: FC<Props> = ({}) => {
                   )}
                 </div>
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Short description</Label>
+                <Input
+                  type="text"
+                  required
+                  defaultValue={extension?.description}
+                  name="description"
+                  placeholder="Short description"
+                />
+              </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="description">Detail description</Label>
@@ -258,7 +263,6 @@ export const AddExtension: FC<Props> = ({}) => {
           </ScrollArea>
 
           <SheetFooter className="py-2 flex sm:justify-between flex-row">
-            <PublicSwitch />
             <Submit />
           </SheetFooter>
         </form>
