@@ -97,7 +97,7 @@ export const CreateExtension = async (
       name: inputModel.name,
       executionSteps: inputModel.executionSteps,
       description: inputModel.description,
-      isPublished: user.isAdmin ? inputModel.isPublished : false,
+      isPublished: inputModel.isPublished,
       userId: await userHashedId(),
       createdAt: new Date(),
       type: "EXTENSION",
@@ -172,7 +172,10 @@ export const EnsureExtensionOperation = async (
   const hashedId = await userHashedId();
 
   if (extensionResponse.status === "OK") {
-    if (currentUser.isAdmin || extensionResponse.response.userId === hashedId) {
+    if (
+      // currentUser.isAdmin 
+      // || 
+      extensionResponse.response.userId === hashedId) {
       return extensionResponse;
     }
   }
@@ -277,11 +280,8 @@ export const UpdateExtension = async (
     const user = await getCurrentUser();
 
     if (extensionResponse.status === "OK") {
-      inputModel.isPublished = user.isAdmin
-        ? inputModel.isPublished
-        : extensionResponse.response.isPublished;
+      inputModel.isPublished =inputModel.isPublished,
       // inputModel.isPublished = true;
-
       inputModel.userId = extensionResponse.response.userId;
       inputModel.createdAt = new Date();
       inputModel.type = "EXTENSION";

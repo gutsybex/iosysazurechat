@@ -78,7 +78,7 @@ export const CreatePersona = async (
       name: props.name,
       description: props.description,
       personaMessage: props.personaMessage,
-      isPublished: user.isAdmin ? props.isPublished : false,
+      isPublished: props.isPublished,
       userId: await userHashedId(),
       createdAt: new Date(),
       type: PERSONA_ATTRIBUTE,
@@ -121,9 +121,7 @@ export const UpsertPersona = async (
         name: personaInput.name,
         description: personaInput.description,
         personaMessage: personaInput.personaMessage,
-        isPublished: user.isAdmin
-          ? personaInput.isPublished
-          : persona.isPublished,
+        isPublished: personaInput.isPublished,
         createdAt: new Date(),
         shareWith: personaInput.shareWith || [],
       };
@@ -215,8 +213,9 @@ export const EnsurePersonaOperation = async (
   const hashedId = await userHashedId();
 
   if (
-    personaResponse.status === "OK" &&
-    (currentUser.isAdmin || personaResponse.response.userId === hashedId)
+    personaResponse.status === "OK"
+    //  &&
+    // (currentUser.isAdmin || personaResponse.response.userId === hashedId)
   ) {
     return personaResponse;
   }
