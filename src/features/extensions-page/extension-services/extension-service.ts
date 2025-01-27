@@ -168,9 +168,6 @@ export const EnsureExtensionOperation = async (
   id: string
 ): Promise<ServerActionResponse<ExtensionModel>> => {
   const extensionResponse = await FindExtensionByID(id);
-  //const currentUser = await getCurrentUser();
-  //const hashedId = await userHashedId();
-  console.log("EnsureExtensionOperation",extensionResponse.status);
   if (extensionResponse.status === "OK") {
       return extensionResponse;
     
