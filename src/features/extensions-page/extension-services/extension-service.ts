@@ -168,16 +168,12 @@ export const EnsureExtensionOperation = async (
   id: string
 ): Promise<ServerActionResponse<ExtensionModel>> => {
   const extensionResponse = await FindExtensionByID(id);
-  const currentUser = await getCurrentUser();
-  const hashedId = await userHashedId();
-
+  //const currentUser = await getCurrentUser();
+  //const hashedId = await userHashedId();
+  console.log("EnsureExtensionOperation",extensionResponse.status);
   if (extensionResponse.status === "OK") {
-    if (
-      // currentUser.isAdmin 
-      // || 
-      extensionResponse.response.userId === hashedId) {
       return extensionResponse;
-    }
+    
   }
 
   return {

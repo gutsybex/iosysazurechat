@@ -57,8 +57,7 @@ export const AddPromptSlider: FC<SliderProps> = (props) => {
                     align="center"
                   >
                     This will share with the entire organization. All users will
-                    be able to see this. Sharing with specific users will be
-                    disabled.
+                    be able to see this.
                   </TooltipContent>
                 </Tooltip>
               </label>
