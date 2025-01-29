@@ -155,8 +155,11 @@ export const AddNewPersona: FC<Props> = ({}) => {
     if (!isOpened || isPublic) {
       setShareWith([]);
       setSearchTerm("");
+      if (formState && formState.status !== "OK") {
+        formState.errors = [];
+      }
     }
-  }, [isOpened, isPublic]);
+  }, [isOpened, isPublic, formState]);
 
   useEffect(() => {
     if (persona) {

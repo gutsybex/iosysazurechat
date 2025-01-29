@@ -18,6 +18,14 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
 import { addOrUpdatePrompt, promptStore, usePromptState } from "./prompt-store";
+import React from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface SliderProps {}
 
@@ -27,20 +35,50 @@ export const AddPromptSlider: FC<SliderProps> = (props) => {
   const { isOpened, prompt } = usePromptState();
 
   const [formState, formAction] = useFormState(addOrUpdatePrompt, initialState);
+  const [isPublic, setIsPublic] = React.useState(prompt?.isPublished);
+  // const { isOpened, extension } = usePromptState();
 
   const { data } = useSession();
 
   const PublicSwitch = () => {
     if (data === undefined || data === null) return null;
 
-    if (data?.user?.isAdmin) {
-      return (
-        <div className="flex items-center space-x-2">
-          <Switch name="isPublished" defaultChecked={prompt.isPublished} />
-          <Label htmlFor="description">Publish</Label>
-        </div>
-      );
-    }
+    // if (data?.user?.isAdmin) {
+    return (
+      <div className="flex items-center space-x-2">
+        <Switch
+          name="isPublished"
+          defaultChecked={prompt.isPublished}
+          checked={isPublic}
+          onCheckedChange={(checked) => setIsPublic(checked)}
+        />
+        <TooltipProvider>
+          <div>
+            <label htmlFor="description" className="flex items-center">
+              Share with entire organization
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info
+                    size={16}
+                    className="ml-2 cursor-pointer"
+                    aria-label="Info"
+                  />
+                </TooltipTrigger>
+                <TooltipContent
+                  style={{ maxWidth: "24rem" }}
+                  side="top"
+                  align="center"
+                >
+                  This will share with the entire organization. All users will
+                  be able to see this. Sharing with specific users will be
+                  disabled.
+                </TooltipContent>
+              </Tooltip>
+            </label>
+          </div>
+        </TooltipProvider>
+      </div>
+    );
   };
 
   return (
@@ -81,6 +119,7 @@ export const AddPromptSlider: FC<SliderProps> = (props) => {
                   placeholder="Name of the prompt"
                 />
               </div>
+              <PublicSwitch />
               <div className="grid gap-2">
                 <Label htmlFor="description">Short description</Label>
                 <Textarea
@@ -94,7 +133,7 @@ export const AddPromptSlider: FC<SliderProps> = (props) => {
             </div>
           </ScrollArea>
           <SheetFooter className="py-2 flex sm:justify-between flex-row">
-            <PublicSwitch /> <Submit />
+            <Submit />
           </SheetFooter>
         </form>
       </SheetContent>
