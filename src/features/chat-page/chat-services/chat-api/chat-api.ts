@@ -64,7 +64,8 @@ export const ChatAPIEntry = async (props: UserPrompt, signal: AbortSignal) => {
   });
 
   let runner: ChatCompletionStreamingRunner;
-
+  console.log("Chat-api.ts->Chat type:", chatType);
+  console.log("Chat-api.ts->currentChatThread:", currentChatThread);
   switch (chatType) {
     case "chat-with-file":
       runner = await ChatApiRAG({

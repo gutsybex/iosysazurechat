@@ -78,6 +78,7 @@ ${userMessage}
       },
     ],
   };
-
+  // Log the request payload
+  console.log("Chat-api-rag.ts->Request payload to OpenAI:", stream);
   return openAI.beta.chat.completions.stream(stream, { signal });
 };
