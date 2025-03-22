@@ -1,6 +1,7 @@
-import { Markdown } from "@/features/ui/markdown/markdown";
+// import { Markdown } from "@/features/ui/markdown/markdown";
 import { FunctionSquare } from "lucide-react";
 import React from "react";
+import { InlineMath, BlockMath } from "react-katex";
 import {
   Accordion,
   AccordionContent,
@@ -8,7 +9,8 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import { RecursiveUI } from "../ui/recursive-ui";
-import { CitationAction } from "./citation/citation-action";
+// import { CitationAction } from "./citation/citation-action";
+import "katex/dist/katex.min.css";
 
 interface MessageContentProps {
   message: {
@@ -21,12 +23,95 @@ interface MessageContentProps {
 
 const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
   if (message.role === "assistant" || message.role === "user") {
+    // Regex to match block-level formulas (\[ ... \])
+    const blockFormulaRegex = /\\\[(.*?)\\\]/g;
+    // Regex to match inline formulas (\( ... \))
+    const inlineFormulaRegex = /\\\((.*?)\\\)/g;
+
+    // Function to process block-level formulas
+    const processBlockFormula = (formula: any) => {
+      return <BlockMath math={formula} />;
+    };
+
+    // Function to process inline formulas
+    const processInlineFormula = (formula: any) => {
+      return <InlineMath math={formula} />;
+    };
+
+    // Split content into lines to preserve newlines
+    const lines = message.content.split('\n');
+
+    // Process each line
+    const processedLines = lines.map((line, index) => {
+      // Process block-level formulas first
+      const blockFormulaMatches = [...line.matchAll(blockFormulaRegex)];
+      let processedLine = [];
+
+      let lastIndex = 0;
+      blockFormulaMatches.forEach((match) => {
+        const [fullMatch, formula] = match;
+        const matchIndex = match.index;
+
+        // Add text before the formula
+        if (matchIndex > lastIndex) {
+          processedLine.push(line.slice(lastIndex, matchIndex));
+        }
+
+        // Add the processed block formula
+        processedLine.push(processBlockFormula(formula));
+        lastIndex = matchIndex + fullMatch.length;
+      });
+
+      // Add remaining text after the last block formula
+      if (lastIndex < line.length) {
+        processedLine.push(line.slice(lastIndex));
+      }
+
+      // Process inline formulas in the processed line
+      const finalProcessedLine = processedLine.map((part, partIndex) => {
+        if (typeof part === 'string') {
+          // Replace inline formulas in the string part
+          const inlineFormulaMatches = [...part.matchAll(inlineFormulaRegex)];
+          let processedPart = [];
+          let lastInlineIndex = 0;
+
+          inlineFormulaMatches.forEach((match) => {
+            const [fullMatch, formula] = match;
+            const matchIndex = match.index;
+
+            // Add text before the inline formula
+            if (matchIndex > lastInlineIndex) {
+              processedPart.push(part.slice(lastInlineIndex, matchIndex));
+            }
+
+            // Add the processed inline formula
+            processedPart.push(processInlineFormula(formula));
+            lastInlineIndex = matchIndex + fullMatch.length;
+          });
+
+          // Add remaining text after the last inline formula
+          if (lastInlineIndex < part.length) {
+            processedPart.push(part.slice(lastInlineIndex));
+          }
+
+          return <React.Fragment key={partIndex}>{processedPart}</React.Fragment>;
+        }
+
+        // If the part is already a React component, return it as is
+        return <React.Fragment key={partIndex}>{part}</React.Fragment>;
+      });
+
+      // Return the processed line as a React fragment
+      return <React.Fragment key={index}>{finalProcessedLine}<br /></React.Fragment>;
+    });
+
     return (
       <>
-        <Markdown
+        {/*<Markdown
           content={message.content}
           onCitationClick={CitationAction}
-        ></Markdown>
+        ></Markdown>*/}
+        <div className="max-w-none">{processedLines}</div>
         {message.multiModalImage && <img src={message.multiModalImage} />}
       </>
     );
