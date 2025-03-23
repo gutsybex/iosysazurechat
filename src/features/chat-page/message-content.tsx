@@ -53,7 +53,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
         const matchIndex = match.index;
 
         // Add text before the formula
-        if (matchIndex > lastIndex) {
+        if (matchIndex !== undefined && matchIndex > lastIndex) {
           processedLine.push(line.slice(lastIndex, matchIndex));
         }
 
