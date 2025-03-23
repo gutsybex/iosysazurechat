@@ -39,7 +39,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
     };
 
     // Split content into lines to preserve newlines
-    const lines = message.content.split('\n');
+    const lines = message.content.split("\n");
 
     // Process each line
     const processedLines = lines.map((line, index) => {
@@ -51,15 +51,16 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
       blockFormulaMatches.forEach((match) => {
         const [fullMatch, formula] = match;
         const matchIndex = match.index;
+        const safeMatchIndex = matchIndex ?? 0; // Replace 0 with your desired default value
 
-        // Add text before the formula
-        if (matchIndex !== undefined && matchIndex > lastIndex) {
-          processedLine.push(line.slice(lastIndex, matchIndex));
-        }
+          // Add text before the formula
+          if (safeMatchIndex > lastIndex) {
+            processedLine.push(line.slice(lastIndex, safeMatchIndex));
+          }
 
-        // Add the processed block formula
-        processedLine.push(processBlockFormula(formula));
-        lastIndex = matchIndex + fullMatch.length;
+          // Add the processed block formula
+          processedLine.push(processBlockFormula(formula));
+          lastIndex = safeMatchIndex + fullMatch.length;
       });
 
       // Add remaining text after the last block formula
@@ -69,7 +70,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
       // Process inline formulas in the processed line
       const finalProcessedLine = processedLine.map((part, partIndex) => {
-        if (typeof part === 'string') {
+        if (typeof part === "string") {
           // Replace inline formulas in the string part
           const inlineFormulaMatches = [...part.matchAll(inlineFormulaRegex)];
           let processedPart = [];
@@ -77,7 +78,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
           inlineFormulaMatches.forEach((match) => {
             const [fullMatch, formula] = match;
-            const matchIndex = match.index;
+            const matchIndex = match.index ?? 0;
 
             // Add text before the inline formula
             if (matchIndex > lastInlineIndex) {
@@ -94,7 +95,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
             processedPart.push(part.slice(lastInlineIndex));
           }
 
-          return <React.Fragment key={partIndex}>{processedPart}</React.Fragment>;
+          return (
+            <React.Fragment key={partIndex}>{processedPart}</React.Fragment>
+          );
         }
 
         // If the part is already a React component, return it as is
@@ -102,7 +105,12 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
       });
 
       // Return the processed line as a React fragment
-      return <React.Fragment key={index}>{finalProcessedLine}<br /></React.Fragment>;
+      return (
+        <React.Fragment key={index}>
+          {finalProcessedLine}
+          <br />
+        </React.Fragment>
+      );
     });
 
     return (
