@@ -1,4 +1,4 @@
-// import { Markdown } from "@/features/ui/markdown/markdown";
+import { Markdown } from "@/features/ui/markdown/markdown";
 import { FunctionSquare } from "lucide-react";
 import React from "react";
 import { InlineMath, BlockMath } from "react-katex";
@@ -9,7 +9,7 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import { RecursiveUI } from "../ui/recursive-ui";
-// import { CitationAction } from "./citation/citation-action";
+import { CitationAction } from "./citation/citation-action";
 import "katex/dist/katex.min.css";
 
 interface MessageContentProps {
@@ -39,7 +39,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
     };
 
     // Split content into lines to preserve newlines
-    const lines = message.content.split("\n");
+    const citationContent = message.content.match(/{%.*?%}/g);
+    const cleanedLine = message.content.replace(/{%.*?%}/g, "").trim();
+    const lines = cleanedLine.split("\n");
 
     // Process each line
     const processedLines = lines.map((line, index) => {
@@ -53,14 +55,14 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
         const matchIndex = match.index;
         const safeMatchIndex = matchIndex ?? 0; // Replace 0 with your desired default value
 
-          // Add text before the formula
-          if (safeMatchIndex > lastIndex) {
-            processedLine.push(line.slice(lastIndex, safeMatchIndex));
-          }
+        // Add text before the formula
+        if (safeMatchIndex > lastIndex) {
+          processedLine.push(line.slice(lastIndex, safeMatchIndex));
+        }
 
-          // Add the processed block formula
-          processedLine.push(processBlockFormula(formula));
-          lastIndex = safeMatchIndex + fullMatch.length;
+        // Add the processed block formula
+        processedLine.push(processBlockFormula(formula));
+        lastIndex = safeMatchIndex + fullMatch.length;
       });
 
       // Add remaining text after the last block formula
@@ -105,21 +107,18 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
       });
 
       // Return the processed line as a React fragment
-      return (
-        <React.Fragment key={index}>
-          {finalProcessedLine}
-          <br />
-        </React.Fragment>
-      );
+      return <React.Fragment key={index}>{finalProcessedLine}</React.Fragment>;
     });
 
     return (
       <>
-        {/*<Markdown
-          content={message.content}
-          onCitationClick={CitationAction}
-        ></Markdown>*/}
-        <div className="max-w-none">{processedLines}</div>
+        {processedLines}
+        {citationContent?.length > 0 && (
+          <Markdown
+            content={citationContent[0]}
+            onCitationClick={CitationAction}
+          ></Markdown>
+        )}
         {message.multiModalImage && <img src={message.multiModalImage} />}
       </>
     );
