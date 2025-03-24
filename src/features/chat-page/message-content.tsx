@@ -113,9 +113,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
     return (
       <>
         {processedLines}
-        {citationContent?.length > 0 && (
+        {citationContent && citationContent?.length > 0 && (
           <Markdown
-            content={citationContent[0]}
+            content={citationContent?.[0] || ""}
             onCitationClick={CitationAction}
           ></Markdown>
         )}
