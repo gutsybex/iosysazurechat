@@ -43,12 +43,18 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
     // Split content into lines to preserve newlines
     const citationContent = message.content.match(/{%.*?%}/g);
-    const cleanedLine = message.content.replace(/{%.*?%}/g, "").trim();
-    const cleanedFormula = cleanedLine.replace(/\\\[\n/g, '\\[').replace(/\n \\]/g, '\\]');
-    const lines = cleanedFormula.split("\n");
+    const cleanedContent = message.content
+    .replace(/{%.*?%}/g, "")
+    .trim()
+    .replace(/\\\[\n/g, '\\[')
+    .replace(/\n \\]/g, '\\]')
+    .replace(/}\n/g, '}')
+    .replace(/\\n \\\\end/g, '\\\\end')
+    .replace(/\\\\\n/g, '\\\\')
+    .split("\n");
 
     // Process each line
-    const processedLines = lines.map((line, index) => {
+    const processedLines = cleanedContent.map((line, index) => {
       // Process block-level formulas first
       const blockFormulaMatches = [...line.matchAll(blockFormulaRegex)];
       let processedLine = [];
