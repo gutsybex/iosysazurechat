@@ -38,6 +38,8 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
       return <InlineMath math={formula} />;
     };
 
+    // const initialContent = `The Motor Synchronous Speed formula on page 12 is:\n\n\\[ N = \\frac{120f}{P} \\]\n\nwhere:\n- \\( N \\) = RPM (Revolutions Per Minute)\n- \\( f \\) = Applied Frequency\n- \\( P \\) = Number of Poles\n\n{% citation items=[{name:\"drive-at001_-en-Compact.pdf\", id:\"1OK6OQsY7XZA7eWNQIRRQBe7Rlrjhq4fvHoC\"}] /%}`;
+
     // Split content into lines to preserve newlines
     const citationContent = message.content.match(/{%.*?%}/g);
     const cleanedLine = message.content.replace(/{%.*?%}/g, "").trim();
@@ -107,7 +109,12 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
       });
 
       // Return the processed line as a React fragment
-      return <React.Fragment key={index}>{finalProcessedLine}</React.Fragment>;
+      return (
+        <React.Fragment key={index}>
+          {finalProcessedLine}
+          <br />
+        </React.Fragment>
+      );
     });
 
     return (
