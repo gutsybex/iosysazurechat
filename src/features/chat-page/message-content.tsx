@@ -27,103 +27,127 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
     const blockFormulaRegex = /\\\[(.*?)\\\]/g;
     // Regex to match inline formulas (\( ... \))
     const inlineFormulaRegex = /\\\((.*?)\\\)/g;
+    // Regex to match bold text (** ... **)
+    const boldTextRegex = /\*\*(.*?)\*\*/g;
 
     // Function to process block-level formulas
-    const processBlockFormula = (formula: any) => {
-      // console.log(" processBlockFormula > formula:", formula);
+    const processBlockFormula = (formula: string) => {
       return <BlockMath math={formula} />;
     };
 
     // Function to process inline formulas
-    const processInlineFormula = (formula: any) => {
-      // console.log(" processInlineFormula > formula:", formula);
+    const processInlineFormula = (formula: string) => {
       return <InlineMath math={formula} />;
     };
 
     // Function to process bold text
     const processBoldText = (text: string) => {
-      return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      return <strong>{text}</strong>;
     };
 
-    // const initialContent = `The Motor Synchronous Speed formula on page 12 is:\n\n\\[ N = \\frac{120f}{P} \\]\n\nwhere:\n- \\( N \\) = RPM (Revolutions Per Minute)\n- \\( f \\) = Applied Frequency\n- \\( P \\) = Number of Poles\n\n{% citation items=[{name:\"drive-at001_-en-Compact.pdf\", id:\"1OK6OQsY7XZA7eWNQIRRQBe7Rlrjhq4fvHoC\"}] /%}`;
-    // const initialContent = `For DC motor drive applications, some of the most important formulas include those related to current, torque, power, and dynamic braking. Here are the key formulas that are frequently used:\n\n1. **Current and Torque Relationship:**\n \\[\n \\text{Torque} \\propto \\text{Armature Current}\n \\]\n Armature current (\\(I_a\\)) is directly proportional to the torque (\\(\\tau\\)) produced by the motor.\n\n2. **Power Calculation:**\n \\[\n P = VI\n \\]\n Where \\(P\\) is the power in watts, \\(V\\) is the voltage in volts, and \\(I\\) is the current in amperes.\n\n3. **Power Formula for Three-Phase Systems:**\n \\[\n P = \\sqrt{3} \\times V_L \\times I_L \\times \\text{Power Factor}\n \\]\n Where:\n - \\(P\\) is the power in watts.\n - \\(V_L\\) is the line voltage.\n - \\(I_L\\) is the line current.\n - \\(\\text{Power Factor}\\) is the power factor of the motor, assumed typically at full speed, full torque, and full voltage.\n\n4. **Inertia Calculation (total inertia):**\n \\[\n J_{\\text{Total}} = J_{\\text{Load}} + J_{\\text{Drive Pulley}} + J_{\\text{Tail Pulley}} + J_{\\text{Idler Roller}} + \\left(J_{\\text{Rotor}} \\times \\text{Gear Ratio}^2\\right)\n \\]\n\n5. **Torque Calculation for Acceleration:**\n \\[\n T_{\\text{Accel}} = J_{\\text{Total}} \\times \\frac{\\Delta \\omega}{t_{\\text{Accel}}}\n \\]\n Where \\(J_{\\text{Total}}\\) is the total inertia, \\(\\Delta \\omega\\) is the change in angular velocity, and \\(t_{\\text{Accel}}\\) is the time to accelerate.\n\n6. **Dynamic Braking Power Dissipation:**\n \\[\n P_{\\text{Peak}} = P_{\\text{Decel}} \\times \\text{motor efficiency}\n \\]\n \\[\n P_{\\text{Ave}} = \\frac{P_{\\text{Peak}} \\times \\text{decel time}}{\\text{cycle time}}\n \\]\n\n7. **Overload Capacity:**\n DC drives typically have these overload capacities:\n \\[\n \\begin{align*}\n 100\\% & \\text{ of rated current continuously} \\\\\n 150\\% & \\text{ of rated current for 1 minute} \\\\\n 200\\% & \\text{ of rated current for 10 seconds} \\\\\n 250\\% & \\text{ of rated current for 2 or 3 seconds}\n \\end{align*}\n \\]\n\n8. **AC Drive Overload Capacity for Comparison:**\n \\[\n \\begin{align*}\n 100\\% & \\text{ of rated current continuously} \\\\\n 150\\% & \\text{ of rated current for 1 minute} \\\\\n 200\\% & \\text{ of rated current for 2 or 3 seconds}\n \\end{align*}\n \\]\n\nThe above formulas can help in the design, assessment, and comparison of DC motor and drive systems to ensure they meet the necessary requirements for a given application.\n\n{% citation items=[{name:\"drive-at001_-en-p (1).pdf\",id:\"GPwrxob0NiOsmPxScsm9wbeXixfd3II64r4z\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"3c3L3a1KlOMoFg1fUznq7OfxpDaKz8fX9fER\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"O3GEDD3X2K9om9mc3sIRpIQIO79ceCX6xPqj\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"FzkE0m4vp0fembey47gxrqhjv1m6HTXTGcu7\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"ibT5qNiAB3acGDr4g6Rijs1shJyaz0dJPerI\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"UkiUNoX4RGYXMAYklUqGzSlXdVPYi1F331Sg\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"pZFZhcjSIz9qcSyb5sFpPFhD2jIRyY9WtuRR\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"wlDVETrK2rqv8D9GikcbYSWmwco158GYRGw5\"}] /%}`;
+    const initialContent = `For DC motor drive applications, some of the most important formulas include those related to current, torque, power, and dynamic braking. Here are the key formulas that are frequently used:\n\n1. **Current and Torque Relationship:**\n \\[\n \\text{Torque} \\propto \\text{Armature Current}\n \\]\n Armature current (\\(I_a\\)) is directly proportional to the torque (\\(\\tau\\)) produced by the motor.\n\n2. **Power Calculation:**\n \\[\n P = VI\n \\]\n Where \\(P\\) is the power in watts, \\(V\\) is the voltage in volts, and \\(I\\) is the current in amperes.\n\n3. **Power Formula for Three-Phase Systems:**\n \\[\n P = \\sqrt{3} \\times V_L \\times I_L \\times \\text{Power Factor}\n \\]\n Where:\n - \\(P\\) is the power in watts.\n - \\(V_L\\) is the line voltage.\n - \\(I_L\\) is the line current.\n - \\(\\text{Power Factor}\\) is the power factor of the motor, assumed typically at full speed, full torque, and full voltage.\n\n4. **Inertia Calculation (total inertia):**\n \\[\n J_{\\text{Total}} = J_{\\text{Load}} + J_{\\text{Drive Pulley}} + J_{\\text{Tail Pulley}} + J_{\\text{Idler Roller}} + \\left(J_{\\text{Rotor}} \\times \\text{Gear Ratio}^2\\right)\n \\]\n\n5. **Torque Calculation for Acceleration:**\n \\[\n T_{\\text{Accel}} = J_{\\text{Total}} \\times \\frac{\\Delta \\omega}{t_{\\text{Accel}}}\n \\]\n Where \\(J_{\\text{Total}}\\) is the total inertia, \\(\\Delta \\omega\\) is the change in angular velocity, and \\(t_{\\text{Accel}}\\) is the time to accelerate.\n\n6. **Dynamic Braking Power Dissipation:**\n \\[\n P_{\\text{Peak}} = P_{\\text{Decel}} \\times \\text{motor efficiency}\n \\]\n \\[\n P_{\\text{Ave}} = \\frac{P_{\\text{Peak}} \\times \\text{decel time}}{\\text{cycle time}}\n \\]\n\n7. **Overload Capacity:**\n DC drives typically have these overload capacities:\n \\[\n \\begin{align*}\n 100\\% & \\text{ of rated current continuously} \\\\\n 150\\% & \\text{ of rated current for 1 minute} \\\\\n 200\\% & \\text{ of rated current for 10 seconds} \\\\\n 250\\% & \\text{ of rated current for 2 or 3 seconds}\n \\end{align*}\n \\]\n\n8. **AC Drive Overload Capacity for Comparison:**\n \\[\n \\begin{align*}\n 100\\% & \\text{ of rated current continuously} \\\\\n 150\\% & \\text{ of rated current for 1 minute} \\\\\n 200\\% & \\text{ of rated current for 2 or 3 seconds}\n \\end{align*}\n \\]\n\nThe above formulas can help in the design, assessment, and comparison of DC motor and drive systems to ensure they meet the necessary requirements for a given application.\n\n{% citation items=[{name:\"drive-at001_-en-p (1).pdf\",id:\"GPwrxob0NiOsmPxScsm9wbeXixfd3II64r4z\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"3c3L3a1KlOMoFg1fUznq7OfxpDaKz8fX9fER\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"O3GEDD3X2K9om9mc3sIRpIQIO79ceCX6xPqj\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"FzkE0m4vp0fembey47gxrqhjv1m6HTXTGcu7\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"ibT5qNiAB3acGDr4g6Rijs1shJyaz0dJPerI\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"UkiUNoX4RGYXMAYklUqGzSlXdVPYi1F331Sg\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"pZFZhcjSIz9qcSyb5sFpPFhD2jIRyY9WtuRR\"},{name:\"drive-at001_-en-p (1).pdf\",id:\"wlDVETrK2rqv8D9GikcbYSWmwco158GYRGw5\"}] /%}`;
 
     // Split content into lines to preserve newlines
-    const citationContent = message.content.match(/{%.*?%}/g);
-    const cleanedContent = message.content
+    const citationContent = initialContent.match(/{%.*?%}/g);
+    const cleanedContent = initialContent
       .replace(/{%.*?%}/g, "")
       .trim()
-      .replace(/\\\[\n/g, '\\[')
-      .replace(/\n \\]/g, '\\]')
-      .replace(/}\n/g, '}')
-      .replace(/\\n \\\\end/g, '\\\\end')
-      .replace(/\\\\\n/g, '\\\\')
+      .replace(/\\\[\n/g, "\\[")
+      .replace(/\n \\]/g, "\\]")
+      .replace(/}\n/g, "}")
+      .replace(/\\n \\\\end/g, "\\\\end")
+      .replace(/\\\\\n/g, "\\\\")
       .split("\n");
 
     // Process each line
     const processedLines = cleanedContent.map((line, index) => {
-      // Process bold text first
-      line = processBoldText(line);
-
-      // Process block-level formulas
+      // Process block-level formulas first
       const blockFormulaMatches = [...line.matchAll(blockFormulaRegex)];
       let processedLine = [];
 
       let lastIndex = 0;
       blockFormulaMatches.forEach((match) => {
         const [fullMatch, formula] = match;
-        const matchIndex = match.index;
-        const safeMatchIndex = matchIndex ?? 0; // Replace 0 with your desired default value
+        const matchIndex = match.index ?? 0;
 
         // Add text before the formula
-        if (safeMatchIndex > lastIndex) {
-          processedLine.push(
-            <span dangerouslySetInnerHTML={{ __html: line.slice(lastIndex, safeMatchIndex) }} />
-          );
+        if (matchIndex > lastIndex) {
+          processedLine.push(line.slice(lastIndex, matchIndex));
         }
 
         // Add the processed block formula
         processedLine.push(processBlockFormula(formula));
-        lastIndex = safeMatchIndex + fullMatch.length;
+        lastIndex = matchIndex + fullMatch.length;
       });
 
       // Add remaining text after the last block formula
       if (lastIndex < line.length) {
-        processedLine.push(
-          <span dangerouslySetInnerHTML={{ __html: line.slice(lastIndex) }} />
-        );
+        processedLine.push(line.slice(lastIndex));
       }
 
-      // Process inline formulas in the processed line
+      // Process inline formulas and bold text in the processed line
       const finalProcessedLine = processedLine.map((part, partIndex) => {
         if (typeof part === "string") {
-          // Replace inline formulas in the string part
-          const inlineFormulaMatches = [...part.matchAll(inlineFormulaRegex)];
+          // Process bold text first
+          const boldTextMatches = [...part.matchAll(boldTextRegex)];
           let processedPart = [];
-          let lastInlineIndex = 0;
+          let lastBoldIndex = 0;
 
-          inlineFormulaMatches.forEach((match) => {
-            const [fullMatch, formula] = match;
+          boldTextMatches.forEach((match) => {
+            const [fullMatch, text] = match;
             const matchIndex = match.index ?? 0;
 
-            // Add text before the inline formula
-            if (matchIndex > lastInlineIndex) {
-              processedPart.push(
-                <span dangerouslySetInnerHTML={{ __html: part.slice(lastInlineIndex, matchIndex) }} />
-              );
+            // Add text before the bold text
+            if (matchIndex > lastBoldIndex) {
+              processedPart.push(part.slice(lastBoldIndex, matchIndex));
             }
 
-            // Add the processed inline formula
-            processedPart.push(processInlineFormula(formula));
-            lastInlineIndex = matchIndex + fullMatch.length;
+            // Add the processed bold text
+            processedPart.push(processBoldText(text));
+            lastBoldIndex = matchIndex + fullMatch.length;
           });
 
-          // Add remaining text after the last inline formula
-          if (lastInlineIndex < part.length) {
-            processedPart.push(
-              <span dangerouslySetInnerHTML={{ __html: part.slice(lastInlineIndex) }} />
-            );
+          // Add remaining text after the last bold text
+          if (lastBoldIndex < part.length) {
+            processedPart.push(part.slice(lastBoldIndex));
           }
+
+          // Now process inline formulas in each part
+          processedPart = processedPart.map((subPart, subPartIndex) => {
+            if (typeof subPart === "string") {
+              const inlineFormulaMatches = [
+                ...subPart.matchAll(inlineFormulaRegex),
+              ];
+              let finalSubPart = [];
+              let lastInlineIndex = 0;
+
+              inlineFormulaMatches.forEach((match) => {
+                const [fullMatch, formula] = match;
+                const matchIndex = match.index ?? 0;
+
+                // Add text before the inline formula
+                if (matchIndex > lastInlineIndex) {
+                  finalSubPart.push(subPart.slice(lastInlineIndex, matchIndex));
+                }
+
+                // Add the processed inline formula
+                finalSubPart.push(processInlineFormula(formula));
+                lastInlineIndex = matchIndex + fullMatch.length;
+              });
+
+              // Add remaining text after the last inline formula
+              if (lastInlineIndex < subPart.length) {
+                finalSubPart.push(subPart.slice(lastInlineIndex));
+              }
+
+              return (
+                <React.Fragment key={subPartIndex}>
+                  {finalSubPart}
+                </React.Fragment>
+              );
+            }
+            return subPart;
+          });
 
           return (
             <React.Fragment key={partIndex}>{processedPart}</React.Fragment>
