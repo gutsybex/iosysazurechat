@@ -30,12 +30,19 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
     // Function to process block-level formulas
     const processBlockFormula = (formula: any) => {
+      // console.log(" processBlockFormula > formula:", formula);
       return <BlockMath math={formula} />;
     };
 
     // Function to process inline formulas
     const processInlineFormula = (formula: any) => {
+      // console.log(" processInlineFormula > formula:", formula);
       return <InlineMath math={formula} />;
+    };
+
+    // Function to process bold text
+    const processBoldText = (text: string) => {
+      return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     };
 
     // const initialContent = `The Motor Synchronous Speed formula on page 12 is:\n\n\\[ N = \\frac{120f}{P} \\]\n\nwhere:\n- \\( N \\) = RPM (Revolutions Per Minute)\n- \\( f \\) = Applied Frequency\n- \\( P \\) = Number of Poles\n\n{% citation items=[{name:\"drive-at001_-en-Compact.pdf\", id:\"1OK6OQsY7XZA7eWNQIRRQBe7Rlrjhq4fvHoC\"}] /%}`;
@@ -44,18 +51,21 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
     // Split content into lines to preserve newlines
     const citationContent = message.content.match(/{%.*?%}/g);
     const cleanedContent = message.content
-    .replace(/{%.*?%}/g, "")
-    .trim()
-    .replace(/\\\[\n/g, '\\[')
-    .replace(/\n \\]/g, '\\]')
-    .replace(/}\n/g, '}')
-    .replace(/\\n \\\\end/g, '\\\\end')
-    .replace(/\\\\\n/g, '\\\\')
-    .split("\n");
+      .replace(/{%.*?%}/g, "")
+      .trim()
+      .replace(/\\\[\n/g, '\\[')
+      .replace(/\n \\]/g, '\\]')
+      .replace(/}\n/g, '}')
+      .replace(/\\n \\\\end/g, '\\\\end')
+      .replace(/\\\\\n/g, '\\\\')
+      .split("\n");
 
     // Process each line
     const processedLines = cleanedContent.map((line, index) => {
-      // Process block-level formulas first
+      // Process bold text first
+      line = processBoldText(line);
+
+      // Process block-level formulas
       const blockFormulaMatches = [...line.matchAll(blockFormulaRegex)];
       let processedLine = [];
 
@@ -67,7 +77,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
         // Add text before the formula
         if (safeMatchIndex > lastIndex) {
-          processedLine.push(line.slice(lastIndex, safeMatchIndex));
+          processedLine.push(
+            <span dangerouslySetInnerHTML={{ __html: line.slice(lastIndex, safeMatchIndex) }} />
+          );
         }
 
         // Add the processed block formula
@@ -77,7 +89,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
       // Add remaining text after the last block formula
       if (lastIndex < line.length) {
-        processedLine.push(line.slice(lastIndex));
+        processedLine.push(
+          <span dangerouslySetInnerHTML={{ __html: line.slice(lastIndex) }} />
+        );
       }
 
       // Process inline formulas in the processed line
@@ -94,7 +108,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
             // Add text before the inline formula
             if (matchIndex > lastInlineIndex) {
-              processedPart.push(part.slice(lastInlineIndex, matchIndex));
+              processedPart.push(
+                <span dangerouslySetInnerHTML={{ __html: part.slice(lastInlineIndex, matchIndex) }} />
+              );
             }
 
             // Add the processed inline formula
@@ -104,7 +120,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
 
           // Add remaining text after the last inline formula
           if (lastInlineIndex < part.length) {
-            processedPart.push(part.slice(lastInlineIndex));
+            processedPart.push(
+              <span dangerouslySetInnerHTML={{ __html: part.slice(lastInlineIndex) }} />
+            );
           }
 
           return (
